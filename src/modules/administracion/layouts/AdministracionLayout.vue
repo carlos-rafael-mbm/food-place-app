@@ -80,6 +80,14 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-table-view'})"></v-list-item>
                     <v-list-item
+                        prepend-icon="mdi-cash-register"
+                        title="Cajas registradoras"
+                        value="caja_registradora"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-cash-register-view'})"></v-list-item>
+                    <v-list-item
                         prepend-icon="mdi-account-circle"
                         title="Clientes"
                         value="clientes"

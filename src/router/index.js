@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import atencionRouter from "@/modules/atencion/router"
 import administracionRouter from "@/modules/administracion/router"
 import cocinaRouter from "@/modules/cocina/router"
+import cajaRouter from "@/modules/caja/router";
 import authRouter from "@/modules/autenticacion/router"
 import almacenRouter from "@/modules/almacen/router";
 import {isAuthenticatedGuard, isAuthenticatedAdmin, isAuthenticatedWaiter, isAuthenticatedCook} from '@/modules/autenticacion/router/auth-guard'
@@ -28,6 +29,11 @@ const routes = [
     path: '/cocina',
     beforeEnter: [isAuthenticatedCook],
     ...cocinaRouter
+  },
+  {
+    path: '/caja',
+    beforeEnter: [isAuthenticatedCook],
+    ...cajaRouter
   },
   {
     path: '/almacen',

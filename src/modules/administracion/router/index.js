@@ -47,6 +47,12 @@ export default {
             component: () => import(/* webpackChunkName: "administracion-table-view" */ '@/modules/administracion/views/mesa/MesaView.vue')
         },
         {
+            path: '/administracion/cajas-registradoras',
+            name: 'adm-cash-register-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-cash-register-view" */ '@/modules/administracion/views/caja_registradora/CajaRegistradoraView.vue')
+        },
+        {
             path: '/administracion/clientes',
             name: 'adm-client-view',
             beforeEnter: [isAuthenticatedAdmin],

@@ -12,9 +12,11 @@ import categoria_insumo from "@/store/almacen/insumo/categoria"
 import unidad_medida from "@/store/almacen/insumo/unidad_medida"
 import insumo from "@/store/almacen/insumo/insumo"
 import almacen from "@/store/almacen/insumo/almacen"
-import kardex from "@/store/almacen/kardex";
-import area_preparacion from "@/store/local/area_preparacion";
-import parametro from "@/store/parametro";
+import kardex from "@/store/almacen/kardex"
+import area_preparacion from "@/store/local/area_preparacion"
+import parametro from "@/store/parametro"
+import caja_registradora from "@/store/local/caja_registradora"
+import asignacion_cajero from "@/store/caja/asignacion_cajero"
 
 const store = createStore({
     modules: {
@@ -33,7 +35,9 @@ const store = createStore({
         almacen,
         kardex,
         area_preparacion,
-        parametro
+        parametro,
+        caja_registradora,
+        asignacion_cajero
     }
 })
 
