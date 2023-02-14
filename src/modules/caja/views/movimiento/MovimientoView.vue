@@ -12,12 +12,12 @@
             </h3>
         </div>
     </div>
-    <div v-else id="beginning-day" class="d-flex">
+    <div v-else id="movements-day" class="d-flex">
         <div class="text-center d-flex justify-content-center" style="width:100%">
-            <div class="panel-beginning-day justify-content-center align-items-center">
+            <div class="panel-movements-day justify-content-center align-items-center">
                 <div class="my-3 d-flex align-center flex-column">
                     <v-card
-                        title="Inicio de día"
+                        title="Movimientos del día"
                         class="text-center text-light titulo animate__animated animate__flipInY">
                     </v-card>
                 </div>
@@ -27,52 +27,49 @@
                             <div class="control-form justify-content-center mt-5">
                                 <div class="left-control">
                                     <v-combobox
-                                        v-model="cashRegisterAssignment.cash_register"
-                                        :items="cash_registers"
-                                        item-value="id"
-                                        item-title="name"
+                                        v-model="cashRegisterMovement.movement_type"
+                                        :items="['Entrada', 'Salida']"
                                         :rules="[rules.requiredSelection]"
                                         required
-                                        label="Seleccione caja">
+                                        label="Seleccione movimiento">
                                     </v-combobox>
                                 </div>
                                 <div class="right-control text-center">
-                                    <v-combobox
-                                        v-model="cashRegisterAssignment.employee"
-                                        :items="getCompleteNamesOfEmployees()"
-                                        item-value="id"
-                                        item-title="fullName"
-                                        :rules="[rules.requiredSelection]"
-                                        required
-                                        label="Seleccione empleado">
-                                    </v-combobox>
+                                    <v-text-field
+                                        label="Ingrese monto"
+                                        type="number"
+                                        :rules="[rules.required]"
+                                        v-model="cashRegisterMovement.amount"
+                                        required>
+                                    </v-text-field>
                                 </div>
                             </div>
                             <div class="control-form justify-content-center">
                                 <div class="middle-control">
-                                    <v-text-field
-                                        label="Ingrese saldo inicial"
-                                        hide-details="auto"
-                                        type="number"
-                                        :rules="[rules.required]"
-                                        v-model="cashRegisterAssignment.initial_balance"
-                                        required>
-                                    </v-text-field>
+                                    <v-textarea
+                                        bg-color="amber-lighten-4"
+                                        color="brown"
+                                        label="Motivo del movimiento"
+                                        no-resize
+                                        rows="4"
+                                        v-model="cashRegisterMovement.reason"
+                                        :rules="[rules.required]">
+                                    </v-textarea>
                                 </div>
                             </div>
                             <hr style="border-top: 5px solid; margin-bottom: 10px">
                             <div class="text-center">
                                 <v-btn prepend-icon="mdi-broom" class="mb-3 mx-4" rounded color="#679A50" @click="limpiarCampos()">Limpiar campos</v-btn>
-                                <v-btn prepend-icon="mdi-timer-lock-open-outline" class="mb-3 mx-5" rounded color="#679A50" @click="iniciarDia()">Iniciar día</v-btn>
+                                <v-btn prepend-icon="mdi-content-save" class="mb-3 mx-5" rounded color="#679A50" @click="guardarMovimiento()">Guardar</v-btn>
                             </div>
                         </div>
                         <br>
                     </div>
                 </v-form>
-                <div id="tablaInicioDia" class="animate__animated animate__flipInY">
+                <div id="tablaMovimientos" class="animate__animated animate__flipInY">
                     <easy-data-table
                         :headers="headers"
-                        :items="getCashRegisterAssignmentsInOrder()"
+                        :items="getCashRegisterMovementsInOrder()"
                         :theme-color="themeColor"
                         :rows-per-page="10"
                         table-class-name="customize-table"
@@ -81,21 +78,21 @@
                         show-index
                         buttons-pagination
                         rows-per-page-message="Filas por página"
-                        empty-message="No hay datos de inicios o cierres de día">
+                        empty-message="No hay datos de movimientos en el día">
                         <template #item-action="item">
                             <div class="action-wrapper">
-                                <v-btn v-if="item.state == 0" icon="mdi-trash-can-outline" class="text-center ms-2" color="#E75D48" size="x-small" @click="anularInicio(item.id)"></v-btn>
+                                <v-btn v-if="item.state == 1" icon="mdi-square-edit-outline" class="text-center me-2" color="blue" size="x-small" @click="cargarMovimiento(item.id)"></v-btn>
+                                <v-btn v-if="item.state == 1" icon="mdi-trash-can-outline" class="text-center ms-2" color="#E75D48" size="x-small" @click="anularMovimiento(item.id)"></v-btn>
                             </div>
                         </template>
                         <template #item-initial_balance="item">
                             <div class="text-center">
-                                {{ item.initial_balance }}
+                                {{ item.amount }}
                             </div>
                         </template>
                         <template #item-state="item">
-                            <div v-if="item.state == 0">Inicio de día</div>
-                            <div v-if="item.state == 1">Cierre de día</div>
-                            <div v-if="item.state == 2">Apertura anulada</div>
+                            <div v-if="item.state == 0">Anulado</div>
+                            <div v-if="item.state == 1">Activo</div>
                         </template>
                     </easy-data-table>
                 </div>
@@ -111,6 +108,7 @@ import Swal from "sweetalert2";
 export default {
     data() {
         return {
+            isLoading: true,
             rules: {
                 required: value => !!value || 'Campo requerido',
                 requiredSelection: value => {
@@ -120,10 +118,18 @@ export default {
                     return !!value || 'Campo requerido'
                 }
             },
-            cashRegisterAssignment: {
+            cashRegisterMovement: {
                 id: 0,
-                initial_balance: 0,
-                cash_register: null,
+                movement_type: '',
+                amount: 0,
+                reason: '',
+                cash_register_assignment: null
+            },
+            user: {
+                username: '',
+                password: '',
+                state: true,
+                role: null,
                 employee: null
             },
             headers: [],
@@ -131,58 +137,75 @@ export default {
         }
     },
     computed: {
-        ...mapState('caja_registradora', ['cash_registers']),
-        ...mapState('asignacion_cajero', ['cash_register_assignments', 'isLoading']),
-        ...mapState('empleado', ['employees']),
-        ...mapGetters('empleado', ['getCompleteNamesOfEmployees']),
-        ...mapGetters('asignacion_cajero', ['getCashRegisterAssignmentsInOrder'])
+        ...mapState('movimiento_caja', ['cash_register_movements']),
+        ...mapGetters('movimiento_caja', ['getCashRegisterMovementsInOrder', 'getCashRegisterMovementById']),
+        ...mapGetters('login', ['getUser'])
     },
     methods: {
-        ...mapActions('caja_registradora', ['loadCashRegisters']),
-        ...mapActions('empleado', ['loadEmployees']),
-        ...mapActions('asignacion_cajero', ['loadCashRegisterAssignments', 'createCashRegisterAssignment', 'updateCashRegisterAssignment']),
+        ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByEmployee']),
+        ...mapActions('movimiento_caja', ['loadCashRegisterMovements', 'createCashRegisterMovement', 'updateCashRegisterMovement']),
         async limpiarCampos() {
-            this.cashRegisterAssignment.id = 0
-            this.cashRegisterAssignment.initial_balance = 0
-            this.cashRegisterAssignment.cash_register = null
-            this.cashRegisterAssignment.employee = null
+            this.cashRegisterMovement.id = 0
+            this.cashRegisterMovement.movement_type = ''
+            this.cashRegisterMovement.amount = 0
+            this.cashRegisterMovement.reason = ''
             setTimeout(() => {
                 this.$refs.form.resetValidation()
             }, 200);
         },
-        async iniciarDia() {
+        async guardarMovimiento() {
             this.$refs.form.validate()
-            if (this.cashRegisterAssignment.initial_balance == 0 || !this.cashRegisterAssignment.cash_register || !this.cashRegisterAssignment.employee) return
-            if (this.cash_register_assignments.some(asignacion => asignacion.state == 0 && asignacion.cash_register.id == this.cashRegisterAssignment.cash_register.id)) {
-                Swal.fire('Error', `Ya se inició el día en ${this.cashRegisterAssignment.cash_register.name}`, 'error')
-                return
-            }
-            if (this.cash_register_assignments.some(asignacion => asignacion.state == 0 && asignacion.employee.id == this.cashRegisterAssignment.employee.id)) {
-                Swal.fire('Error', `El empleado ${this.cashRegisterAssignment.employee.fullName} ya está asignado a una caja registradora`, 'error')
-                return
-            }
+            if (this.cashRegisterMovement.amount == 0 || !this.cashRegisterMovement.reason || !this.cashRegisterMovement.movement_type) return
             new Swal({
                 title: 'Espere por favor',
                 allowOutsideClick: false
             })
+            if (!this.cashRegisterMovement.cash_register_assignment) {
+                Swal.fire('Error', 'No tiene asignado una caja registradora para realizar esta operación', 'error')
+                return
+            }
             Swal.showLoading()
-            const formData = new FormData()
-            formData.append('initial_balance', this.cashRegisterAssignment.initial_balance)
-            formData.append('state', 0)
-            formData.append('cash_register_id', this.cashRegisterAssignment.cash_register.id)
-            formData.append('employee_id', this.cashRegisterAssignment.employee.id)
-            const res = await this.createCashRegisterAssignment(formData)
+            let res = []
+            if (this.cashRegisterMovement.id == 0) {
+                const formData = new FormData()
+                formData.append('movement_type', this.cashRegisterMovement.movement_type)
+                formData.append('amount', this.cashRegisterMovement.amount)
+                formData.append('reason', this.cashRegisterMovement.reason)
+                formData.append('state', 1)
+                formData.append('cash_register_assignment_id', this.cashRegisterMovement.cash_register_assignment.id)
+                res = await this.createCashRegisterMovement(formData)
+            } else {
+                const formData = new FormData()
+                formData.append('movement_type', this.cashRegisterMovement.movement_type)
+                formData.append('amount', this.cashRegisterMovement.amount)
+                formData.append('reason', this.cashRegisterMovement.reason)
+                res = await this.updateCashRegisterMovement([this.cashRegisterMovement.id, formData])
+            }
             if (res[0] != 0) {
-                Swal.fire('Guardado', 'Se inició el día', 'success')
+                Swal.fire('Guardado', this.cashRegisterMovement.id == 0 ? 'Se guardó movimiento' : 'Se actualizaron los datos del movimiento', 'success')
                 this.limpiarCampos()
             } else {
                 Swal.fire('Error', res[1], 'error')
             }
         },
-        async anularInicio(id) {
+        cargarMovimiento(id) {
+            new Swal({
+                title: 'Espere por favor',
+                allowOutsideClick: false
+            })
+            Swal.showLoading()
+            let movement = this.getCashRegisterMovementById(id)
+            if (!movement) {
+                Swal.fire('Error', 'No se pudo cargar los datos del plato seleccionado', 'error')
+            } else {
+                this.cashRegisterMovement = movement
+                Swal.close()
+            }
+        },
+        async anularMovimiento(id) {
             const {isConfirmed} = await Swal.fire({
                 title: '¿Está seguro?',
-                text: 'Se va a revertir el inicio de día',
+                text: 'Se va a revertir el movimiento seleccionado',
                 showDenyButton: true,
                 denyButtonColor: '#E75D48',
                 denyButtonText: ' <i class="fa fa-thumbs-down"></i>  No, mejor no',
@@ -203,10 +226,10 @@ export default {
                 })
                 Swal.showLoading()
                 const formData = new FormData()
-                formData.append('state', 2)
-                const res = await this.updateCashRegisterAssignment([id, formData])
+                formData.append('state', 0)
+                const res = await this.updateCashRegisterMovement([id, formData])
                 if (res[0] != 0) {
-                    Swal.fire('Guardado', 'Se anuló el inicio de día', 'success')
+                    Swal.fire('Guardado', 'Se anuló el movimiento', 'success')
                     this.limpiarCampos()
                 } else {
                     Swal.fire('Error', res[1], 'error')
@@ -215,17 +238,18 @@ export default {
         }
     },
     async mounted() {
-        await this.loadCashRegisterAssignments()
-        await this.loadCashRegisters()
-        await this.loadEmployees()
+        this.user = this.getUser
+        this.cashRegisterMovement.cash_register_assignment = await this.loadLastCashRegisterAssignmentByEmployee(this.user.employee.id)
+        if (this.cashRegisterMovement.cash_register_assignment)
+            await this.loadCashRegisterMovements(this.cashRegisterMovement.cash_register_assignment.id)
         this.headers = [
-            { text: "Caja", value: "cash_register.name", sortable: true, width: 35 },
-            { text: "Nombre Empleado", value: "employee.name", sortable: true, width: 140 },
-            { text: "Apellidos Empleado", value: "employee.surname", sortable: true, width: 150 },
-            { text: "Saldo inicial", value: "initial_balance", width: 75 },
-            { text: "Estado", value: "state", width: 90 },
-            { text: "Acciones", value: "action" }
+            { text: "Movimiento", value: "movement_type", sortable: true, width: 60 },
+            { text: "Estado", value: "state", sortable: true, width: 70 },
+            { text: "Monto", value: "amount", width: 60 },
+            { text: "Motivo", value: "reason", width: 200 },
+            { text: "Acciones", value: "action", width: 120 }
         ]
+        this.isLoading = false
     }
 }
 </script>
@@ -235,19 +259,19 @@ export default {
     background-color: rgba(133, 104, 38, 0.9);
     border-radius: 20px;
     font-size: 32px;
-    width: 210px;
+    width: 260px;
 }
 #formulario {
     background-color: rgba(227, 205, 131, 0.8);
     border-radius: 20px;
 }
-#beginning-day {
+#movements-day {
     height: 100vh;
     overflow-y: auto;
     background: url('@/assets/Fondo-Adm.png');
     background-size: cover;
 }
-.panel-beginning-day {
+.panel-movements-day {
     width: 50%;
 }
 .control-form {
@@ -266,9 +290,9 @@ export default {
 .middle-control {
     margin-left: 2em;
     margin-right: 2em;
-    width: 25%;
+    width: 50%;
 }
-#tablaInicioDia {
+#tablaMovimientos {
     padding-bottom: 100px;
 }
 .botonCargar {
@@ -281,23 +305,23 @@ export default {
     background-color: lighten($color: #856826, $amount: 40);
 }
 /* Estilos para motores Webkit y blink (Chrome, Safari, Opera... )*/
-#beginning-day::-webkit-scrollbar {
+#movements-day::-webkit-scrollbar {
     -webkit-appearance: none;
 }
-#beginning-day::-webkit-scrollbar:vertical {
+#movements-day::-webkit-scrollbar:vertical {
     width:1px;
 }
-#beginning-day::-webkit-scrollbar-button:increment,#item_menu::-webkit-scrollbar-button {
+#movements-day::-webkit-scrollbar-button:increment,#item_menu::-webkit-scrollbar-button {
     display: none;
 } 
-#beginning-day::-webkit-scrollbar:horizontal {
+#movements-day::-webkit-scrollbar:horizontal {
     height: 10px;
 }
-#beginning-day::-webkit-scrollbar-thumb {
+#movements-day::-webkit-scrollbar-thumb {
     background-color: #797979;
     border-radius: 20px;
 }
-#beginning-day::-webkit-scrollbar-track {
+#movements-day::-webkit-scrollbar-track {
     border-radius: 10px;  
 }
 .customize-table {
@@ -319,7 +343,7 @@ export default {
 }
 @media (max-width: 950px) {
     /* For mobile phones: */
-    .panel-beginning-day {
+    .panel-movements-day {
         width: 90%;
     }
     #formulario {
