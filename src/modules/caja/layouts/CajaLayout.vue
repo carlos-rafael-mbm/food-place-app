@@ -43,7 +43,8 @@
                         value="movimientos"
                         active-class="bg-cream-active animate__animated animate__animated animate__bounceIn"
                         density="compact"
-                        class="bg-cream"></v-list-item>
+                        class="bg-cream"
+                        @click="$router.push({name: 'caja-movement-view'})"></v-list-item>
                     <v-list-item
                         prepend-icon="mdi-state-machine"
                         title="Estado de caja"
@@ -130,7 +131,6 @@ export default {
 }
 .usuario {
     border-bottom: 1px solid;
-    color: white;
 }
 @media only screen and (max-width: 600px) {
     .usuario {

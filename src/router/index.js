@@ -32,7 +32,7 @@ const routes = [
   },
   {
     path: '/caja',
-    beforeEnter: [isAuthenticatedCook],
+    beforeEnter: [isAuthenticatedWaiter],
     ...cajaRouter
   },
   {

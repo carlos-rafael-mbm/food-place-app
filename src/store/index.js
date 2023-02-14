@@ -17,6 +17,7 @@ import area_preparacion from "@/store/local/area_preparacion"
 import parametro from "@/store/parametro"
 import caja_registradora from "@/store/local/caja_registradora"
 import asignacion_cajero from "@/store/caja/asignacion_cajero"
+import movimiento_caja from "@/store/caja/movimiento"
 
 const store = createStore({
     modules: {
@@ -37,7 +38,8 @@ const store = createStore({
         area_preparacion,
         parametro,
         caja_registradora,
-        asignacion_cajero
+        asignacion_cajero,
+        movimiento_caja
     }
 })
 

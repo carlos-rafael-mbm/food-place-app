@@ -16,12 +16,12 @@ export default {
             beforeEnter: [isAuthenticatedWaiter],
             component: () => import(/* webpackChunkName: "caja-beginning-view" */ '@/modules/caja/views/apertura/AperturaView.vue')
         },
-        // {
-        //     path: '/atencion/pedidos',
-        //     name: 'atencion-order-view',
-        //     beforeEnter: [isAuthenticatedWaiter],
-        //     component: () => import(/* webpackChunkName: "atencion-order-view" */ '@/modules/atencion/views/pedido/PedidoView.vue')
-        // },
+        {
+            path: '/caja/movimientos',
+            name: 'caja-movement-view',
+            beforeEnter: [isAuthenticatedWaiter],
+            component: () => import(/* webpackChunkName: "caja-movement-view" */ '@/modules/caja/views/movimiento/MovimientoView.vue')
+        },
         // {
         //     path: '/atencion/cobro',
         //     name: 'atencion-cobro-view',
