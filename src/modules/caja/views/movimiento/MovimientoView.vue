@@ -268,7 +268,7 @@ export default {
 #movements-day {
     height: 100vh;
     overflow-y: auto;
-    background: url('@/assets/Fondo-Adm.png');
+    background: url('@/assets/Fondo-Caja.png');
     background-size: cover;
 }
 .panel-movements-day {

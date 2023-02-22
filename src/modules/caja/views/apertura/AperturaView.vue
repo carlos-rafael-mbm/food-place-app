@@ -17,7 +17,7 @@
             <div class="panel-beginning-day justify-content-center align-items-center">
                 <div class="my-3 d-flex align-center flex-column">
                     <v-card
-                        title="Inicio de día"
+                        title="Apertura de caja"
                         class="text-center text-light titulo animate__animated animate__flipInY">
                     </v-card>
                 </div>
@@ -63,7 +63,7 @@
                             <hr style="border-top: 5px solid; margin-bottom: 10px">
                             <div class="text-center">
                                 <v-btn prepend-icon="mdi-broom" class="mb-3 mx-4" rounded color="#679A50" @click="limpiarCampos()">Limpiar campos</v-btn>
-                                <v-btn prepend-icon="mdi-timer-lock-open-outline" class="mb-3 mx-5" rounded color="#679A50" @click="iniciarDia()">Iniciar día</v-btn>
+                                <v-btn prepend-icon="mdi-timer-lock-open-outline" class="mb-3 mx-5" rounded color="#679A50" @click="iniciarCaja()">Aperturar caja</v-btn>
                             </div>
                         </div>
                         <br>
@@ -93,8 +93,8 @@
                             </div>
                         </template>
                         <template #item-state="item">
-                            <div v-if="item.state == 0">Inicio de día</div>
-                            <div v-if="item.state == 1">Cierre de día</div>
+                            <div v-if="item.state == 0">Apertura de caja</div>
+                            <div v-if="item.state == 1">Cierre de caja</div>
                             <div v-if="item.state == 2">Apertura anulada</div>
                         </template>
                     </easy-data-table>
@@ -135,7 +135,8 @@ export default {
         ...mapState('asignacion_cajero', ['cash_register_assignments', 'isLoading']),
         ...mapState('empleado', ['employees']),
         ...mapGetters('empleado', ['getCompleteNamesOfEmployees']),
-        ...mapGetters('asignacion_cajero', ['getCashRegisterAssignmentsInOrder'])
+        ...mapGetters('asignacion_cajero', ['getCashRegisterAssignmentsInOrder']),
+        ...mapGetters('login', ['getUser'])
     },
     methods: {
         ...mapActions('caja_registradora', ['loadCashRegisters']),
@@ -150,7 +151,7 @@ export default {
                 this.$refs.form.resetValidation()
             }, 200);
         },
-        async iniciarDia() {
+        async iniciarCaja() {
             this.$refs.form.validate()
             if (this.cashRegisterAssignment.initial_balance == 0 || !this.cashRegisterAssignment.cash_register || !this.cashRegisterAssignment.employee) return
             if (this.cash_register_assignments.some(asignacion => asignacion.state == 0 && asignacion.cash_register.id == this.cashRegisterAssignment.cash_register.id)) {
@@ -182,7 +183,7 @@ export default {
         async anularInicio(id) {
             const {isConfirmed} = await Swal.fire({
                 title: '¿Está seguro?',
-                text: 'Se va a revertir el inicio de día',
+                text: 'Se va a revertir la apertura de caja',
                 showDenyButton: true,
                 denyButtonColor: '#E75D48',
                 denyButtonText: ' <i class="fa fa-thumbs-down"></i>  No, mejor no',
@@ -206,7 +207,7 @@ export default {
                 formData.append('state', 2)
                 const res = await this.updateCashRegisterAssignment([id, formData])
                 if (res[0] != 0) {
-                    Swal.fire('Guardado', 'Se anuló el inicio de día', 'success')
+                    Swal.fire('Guardado', 'Se anuló la apertura de caja', 'success')
                     this.limpiarCampos()
                 } else {
                     Swal.fire('Error', res[1], 'error')
@@ -215,17 +216,21 @@ export default {
         }
     },
     async mounted() {
-        await this.loadCashRegisterAssignments()
-        await this.loadCashRegisters()
-        await this.loadEmployees()
-        this.headers = [
-            { text: "Caja", value: "cash_register.name", sortable: true, width: 35 },
-            { text: "Nombre Empleado", value: "employee.name", sortable: true, width: 140 },
-            { text: "Apellidos Empleado", value: "employee.surname", sortable: true, width: 150 },
-            { text: "Saldo inicial", value: "initial_balance", width: 75 },
-            { text: "Estado", value: "state", width: 90 },
-            { text: "Acciones", value: "action" }
-        ]
+        if (this.getUser.role.id == 1) {
+            await this.loadCashRegisterAssignments()
+            await this.loadCashRegisters()
+            await this.loadEmployees()
+            this.headers = [
+                { text: "Caja", value: "cash_register.name", sortable: true, width: 35 },
+                { text: "Nombre Empleado", value: "employee.name", sortable: true, width: 140 },
+                { text: "Apellidos Empleado", value: "employee.surname", sortable: true, width: 150 },
+                { text: "Saldo inicial", value: "initial_balance", width: 75 },
+                { text: "Estado", value: "state", width: 90 },
+                { text: "Acciones", value: "action" }
+            ]
+        } else {
+            this.$router.push({name: 'home'})
+        }
     }
 }
 </script>
@@ -244,7 +249,7 @@ export default {
 #beginning-day {
     height: 100vh;
     overflow-y: auto;
-    background: url('@/assets/Fondo-Adm.png');
+    background: url('@/assets/Fondo-Caja.png');
     background-size: cover;
 }
 .panel-beginning-day {

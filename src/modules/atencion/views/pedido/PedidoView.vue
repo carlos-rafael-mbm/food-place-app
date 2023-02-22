@@ -583,10 +583,10 @@ export default {
     },
     async mounted() {
         window.addEventListener("resize", this.getWidthScreen)
-        await this.loadOrdersToServe()
+        await this.loadOrdersToServe(this.getUser.role.id == 1 ? 0 : this.getUser.employee.id)
         this.isLoading = false
         this.idInterval = setInterval(() => {
-            this.loadOrdersToServe()
+            this.loadOrdersToServe(this.getUser.role.id == 1 ? 0 : this.getUser.employee.id)
         }, 1000 * 30);
     },
     unmounted() {

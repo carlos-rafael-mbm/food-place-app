@@ -1,4 +1,4 @@
-import {isAuthenticatedWaiter} from '@/modules/autenticacion/router/auth-guard';
+import {isAuthenticatedCashier} from '@/modules/autenticacion/router/auth-guard';
 
 export default {
     name: 'caja',
@@ -7,26 +7,38 @@ export default {
         {
             path: '/caja',
             name: 'caja-principal',
-            beforeEnter: [isAuthenticatedWaiter],
+            beforeEnter: [isAuthenticatedCashier],
             component: () => import(/* webpackChunkName: "caja-principal" */ '@/modules/caja/views/CajaView.vue')
         },
         {
             path: '/caja/apertura',
             name: 'caja-beginning-view',
-            beforeEnter: [isAuthenticatedWaiter],
+            beforeEnter: [isAuthenticatedCashier],
             component: () => import(/* webpackChunkName: "caja-beginning-view" */ '@/modules/caja/views/apertura/AperturaView.vue')
         },
         {
             path: '/caja/movimientos',
             name: 'caja-movement-view',
-            beforeEnter: [isAuthenticatedWaiter],
+            beforeEnter: [isAuthenticatedCashier],
             component: () => import(/* webpackChunkName: "caja-movement-view" */ '@/modules/caja/views/movimiento/MovimientoView.vue')
         },
-        // {
-        //     path: '/atencion/cobro',
-        //     name: 'atencion-cobro-view',
-        //     beforeEnter: [isAuthenticatedWaiter],
-        //     component: () => import(/* webpackChunkName: "atencion-cobro-view" */ '@/modules/atencion/views/pedido/PedidoCobroView.vue')
-        // }
+        {
+            path: '/caja/cobro',
+            name: 'caja-cobro-view',
+            beforeEnter: [isAuthenticatedCashier],
+            component: () => import(/* webpackChunkName: "caja-cobro-view" */ '@/modules/caja/views/cobro/CobroView.vue')
+        },
+        {
+            path: '/caja/consulta-estado',
+            name: 'caja-consultation-view',
+            beforeEnter: [isAuthenticatedCashier],
+            component: () => import(/* webpackChunkName: "caja-consultation-view" */ '@/modules/caja/views/consulta/ConsultaView.vue')
+        },
+        {
+            path: '/caja/cierre',
+            name: 'caja-closing-view',
+            beforeEnter: [isAuthenticatedCashier],
+            component: () => import(/* webpackChunkName: "caja-closing-view" */ '@/modules/caja/views/cierre/CierreView.vue')
+        }
     ]
 }

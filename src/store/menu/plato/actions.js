@@ -21,8 +21,8 @@ export const updateCategory = async({commit}, form) => {
         const idCategoria = form[0]
         const categoria = form[1]
         const {data} = await foodplaceApi.put(`/categories/${idCategoria}`, categoria)
-        const { id, name, image, state} = data['categoria-actualizada']
-        const categoria_modificada = { id, name, image, state}
+        const { id, name, image, is_block, state} = data['categoria-actualizada']
+        const categoria_modificada = { id, name, image, is_block, state}
         commit('updateCategory', categoria_modificada)
         return [id, 'Ok']
     } catch (err) {
@@ -35,8 +35,8 @@ export const updateCategory = async({commit}, form) => {
 export const createCategory = async ({commit}, categoria) => {
     try {
         const {data} = await foodplaceApi.post('/categories', categoria)
-        const { id, name, image, state} = data['categoria-creada']
-        const categoria_nueva = { id, name, image, state}
+        const { id, name, image, is_block, state} = data['categoria-creada']
+        const categoria_nueva = { id, name, image, is_block, state}
         commit('addCategory', categoria_nueva)
         return [id, 'Ok']
     } catch (err) {

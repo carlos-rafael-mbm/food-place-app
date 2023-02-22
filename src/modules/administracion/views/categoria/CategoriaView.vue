@@ -40,12 +40,20 @@
                                     <!-- <input type="text" id="txtNombreCategoria" class="form-control" v-model="category.name"><br> -->
                                     <!-- <input type="checkbox" id="chkEstadoCategoria" v-model="category.state">
                                     <label for="chkEstadoCategoria">Activo</label> -->
-                                    <v-checkbox
-                                        label="Activo"
-                                        color="brown"
-                                        hide-details
-                                        v-model="category.state">
-                                    </v-checkbox>
+                                    <div class="d-flex">
+                                        <v-checkbox
+                                            label="Activo"
+                                            color="brown"
+                                            hide-details
+                                            v-model="category.state">
+                                        </v-checkbox>
+                                        <v-checkbox
+                                            label="Combo"
+                                            color="brown"
+                                            hide-details
+                                            v-model="category.is_block">
+                                        </v-checkbox>
+                                    </div>
                                 </div>
                                 <div style="width: 40%" class="right-control mt-3 text-center">
                                     <input type="file" @change="onSelectedImage" ref="imageSelector" v-show="false" accept="image/png, image/jpeg, image/jpg, image/bmp">
@@ -84,10 +92,11 @@
                         <v-table height="36vh" density="compact" class="fondo-tabla">
                             <thead class="text-white text-center">
                                 <tr>
-                                    <th scope="col" style="width: 10%" class="border-top-0 border-end">#</th>
+                                    <th scope="col" style="width: 10px" class="border-top-0 border-end">#</th>
                                     <th scope="col" class="border-top-0 border-end">Nombre</th>
                                     <th scope="col" class="border-top-0 border-end">Estado</th>
-                                    <th scope="col" class="border-top-0 border-end-0">Acciones</th>
+                                    <th scope="col" class="border-top-0 border-end">Tipo</th>
+                                    <th scope="col" class="border-top-0 border-end-0 text-nowrap">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -97,7 +106,9 @@
                                     <td class="border-end border-bottom border-top" style="width: 30%">{{category.name}}</td>
                                     <td class="border-end border-bottom border-top" v-if="category.state === 1">Activo</td>
                                     <td class="border-end border-bottom border-top" v-else>Inactivo</td>
-                                    <td class="border-bottom border-top text-center">
+                                    <td class="border-end border-bottom border-top" v-if="category.is_block === 1">Combo</td>
+                                    <td class="border-end border-bottom border-top" v-else>Individual</td>
+                                    <td class="border-bottom border-top text-center text-nowrap">
                                         <v-btn icon="mdi-square-edit-outline" class="botonCargar my-1" color="blue" size="x-small" @click="cargarCategoria(category.id)"></v-btn>
                                         <v-btn icon="mdi-trash-can-outline" class="botonEliminar my-1" color="#E75D48" size="x-small" @click="eliminarCategoria(category.id)"></v-btn>
                                     </td>
@@ -108,9 +119,7 @@
                 </div>
             </div>
         </div>
-        
     </div>
-    
 </template>
 
 <script>
@@ -130,6 +139,7 @@ export default {
                 id: 0,
                 name: '',
                 image: '',
+                is_block: false,
                 state: true
             }
         }
@@ -161,6 +171,7 @@ export default {
             this.category.id = 0
             this.category.name = ''
             this.category.image = ''
+            this.category.is_block = false
             this.category.state = true
             setTimeout(() => {
                 this.$refs.form.resetValidation()
@@ -182,12 +193,14 @@ export default {
                 const formData = new FormData()
                 formData.append('name', this.category.name)
                 formData.append('image', this.category.image ? this.category.image : '')
+                formData.append('is_block', this.category.is_block ? 1 : 0)
                 formData.append('state', this.category.state ? 1 : 0)
                 res = await this.createCategory(formData)
             } else {
                 const formData = new FormData()
                 formData.append('name', this.category.name)
                 formData.append('image', this.category.image ? this.category.image : '')
+                formData.append('is_block', this.category.is_block ? 1 : 0)
                 formData.append('state', this.category.state ? 1 : 0)
                 res = await this.updateCategory([this.category.id, formData])
             }
@@ -210,6 +223,7 @@ export default {
             } else {
                 this.category = categoria
                 this.category.state = this.category.state == 1 ? true : false
+                this.category.is_block = this.category.is_block == 1 ? true : false
                 // let imageCategory = await getImageObject(this.category.image)
                 // if (imageCategory) {
                 //     try {

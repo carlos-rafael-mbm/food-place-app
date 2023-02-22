@@ -16,10 +16,19 @@ export const isAuthenticatedAdmin = async(to, from, next) => {
 }
 
 export const isAuthenticatedWaiter = async(to, from, next) => {
-    // Guard para ingreso de administradores(1), mozos(2) y cajeros(4)
+    // Guard para ingreso de administradores(1) y mozos(2)
     const {ok, user} = await store.dispatch('login/checkAuthentication')
     if (ok) {
-        if (user.role.id == 1 || user.role.id == 2 || user.role.id == 4) next()
+        if (user.role.id == 1 || user.role.id == 2) next()
+        else next({name: 'home'})
+    } else next({name: 'login'})
+}
+
+export const isAuthenticatedCashier = async(to, from, next) => {
+    // Guard para ingreso de administradores(1) y cajeros(4)
+    const {ok, user} = await store.dispatch('login/checkAuthentication')
+    if (ok) {
+        if (user.role.id == 1 || user.role.id == 4) next()
         else next({name: 'home'})
     } else next({name: 'login'})
 }

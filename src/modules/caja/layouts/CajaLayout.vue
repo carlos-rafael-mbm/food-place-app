@@ -30,6 +30,7 @@
                         <label v-if="user.employee">Hola, {{ user.employee.name }}</label>
                     </div>
                     <v-list-item
+                        v-if="getUser.role.id == 1"
                         prepend-icon="mdi-lock-open-outline"
                         title="Apertura"
                         value="apertura"
@@ -46,19 +47,30 @@
                         class="bg-cream"
                         @click="$router.push({name: 'caja-movement-view'})"></v-list-item>
                     <v-list-item
+                        prepend-icon="mdi-cash-multiple"
+                        title="Cobro"
+                        value="cobro"
+                        active-class="bgBrownActive animate__animated animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bg-cream"
+                        @click="$router.push({name: 'caja-cobro-view'})"></v-list-item>
+                    <v-list-item
                         prepend-icon="mdi-state-machine"
                         title="Estado de caja"
                         value="estado_caja"
                         active-class="bg-cream-active animate__animated animate__animated animate__bounceIn"
                         density="compact"
-                        class="bg-cream"></v-list-item>
+                        class="bg-cream"
+                        @click="$router.push({name: 'caja-consultation-view'})"></v-list-item>
                     <v-list-item
+                        v-if="getUser.role.id == 1"
                         prepend-icon="mdi-lock-outline"
                         title="Cierre"
                         value="cierre"
                         active-class="bg-cream-active animate__animated animate__animated animate__bounceIn"
                         density="compact"
-                        class="bg-cream"></v-list-item>
+                        class="bg-cream"
+                        @click="$router.push({name: 'caja-closing-view'})"></v-list-item>
                 </v-list>
             </v-navigation-drawer>
 

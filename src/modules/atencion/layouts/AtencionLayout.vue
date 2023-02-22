@@ -45,14 +45,6 @@
                         density="compact"
                         class="bgBrown"
                         @click="$router.push({name: 'atencion-nuevo-view'})"></v-list-item>
-                    <v-list-item
-                        prepend-icon="mdi-cash-multiple"
-                        title="Cobro"
-                        value="cobro"
-                        active-class="bgBrownActive animate__animated animate__animated animate__bounceIn"
-                        density="compact"
-                        class="bgBrown"
-                        @click="$router.push({name: 'atencion-cobro-view'})"></v-list-item>
                 </v-list>
             </v-navigation-drawer>
 

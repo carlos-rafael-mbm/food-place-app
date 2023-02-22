@@ -18,7 +18,18 @@ export const loadCashRegisterAssignments = async({commit}) => {
 
 export const loadLastCashRegisterAssignmentByEmployee = async(_, employee_id) => {
     try {
-        const { data } = await foodplaceApi.get(`/cash_register_assignments/last_assignment/${employee_id}`)
+        const { data } = await foodplaceApi.get(`/cash_register_assignments/last-assignment-employee/${employee_id}`)
+        const { id, assignment_datetime, initial_balance, state, cash_register, employee } = data['asignacion-consultada']
+        const cash_register_assignment = { id, assignment_datetime, initial_balance, state, cash_register, employee }
+        return cash_register_assignment
+    } catch (error) {
+        return null
+    }
+}
+
+export const loadLastCashRegisterAssignmentByCashRegister = async(_, cash_register_id) => {
+    try {
+        const { data } = await foodplaceApi.get(`/cash_register_assignments/last-assignment-cash-register/${cash_register_id}`)
         const { id, assignment_datetime, initial_balance, state, cash_register, employee } = data['asignacion-consultada']
         const cash_register_assignment = { id, assignment_datetime, initial_balance, state, cash_register, employee }
         return cash_register_assignment
