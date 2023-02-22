@@ -14,10 +14,11 @@
     </div>
     <div v-else id="pedidos">
         <div class="d-flex justify-content-center align-items-center">
-            <div class="mt-4 col-auto align-center">
-                <div class="text-center titulo animate__animated animate__flipInY">
-                    Relación de pedidos del día
-                </div>
+            <div class="mt-4 d-flex align-center flex-column">
+                <v-card
+                    title="Relación de pedidos del día"
+                    class="text-center text-light titulo animate__animated animate__flipInY">
+                </v-card>
             </div>
         </div>
         <div class="justify-content-center align-items-center" style="margin-bottom: 100px">
@@ -831,15 +832,14 @@ export default {
 #pedidos {
     height: 100vh;
     overflow-y: auto;
-    background: url('@/assets/Fondo-Ate.png');
+    background: url('@/assets/Fondo-Caja.png');
     background-size: cover;
 }
 .titulo {
-    background-color: rgba(241, 196, 15, 0.6);
-    border: 4px solid #856826;
+    background-color: rgba(133, 104, 38, 0.9);
     border-radius: 20px;
+    font-size: 32px;
     width: 300px;
-    font-size: large;
 }
 .bg-solicitado {
     background-color: rgba(241, 196, 15, 0.6);
@@ -857,7 +857,7 @@ export default {
     background-color: rgba(230, 178, 239, 0.7);
 }
 .bgDialog {
-    background-color: lighten($color: #F1C40F, $amount: 32);
+    background-color: lighten($color: #E3CD83, $amount: 10);
 }
 .items-pedidos {
     margin-left: 15%;

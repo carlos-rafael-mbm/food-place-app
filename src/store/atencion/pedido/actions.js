@@ -77,10 +77,10 @@ export const loadOrdersByPreparationArea = async({commit}, preparation_area_id) 
     }
 }
 
-export const loadOrdersToServe = async({commit}) => {
+export const loadOrdersToServe = async({commit}, employee_id) => {
     const orders = []
     try {
-        const { data } = await foodplaceApi.get('/orders/to-serve')
+        const { data } = await foodplaceApi.get(`/orders/to-serve/${employee_id}`)
         for (const entry of Array.prototype.entries.call(data)) {
             orders.push({...entry[1], orden: entry[0] + 1})
         }
@@ -89,8 +89,23 @@ export const loadOrdersToServe = async({commit}) => {
         }
         commit('setOrders', orders)
     } catch (error) {
-        console.log(error)
         commit('setOrders', orders)
+    }
+}
+
+export const loadOrdersByAssigment = async(_, assignment_id) => {
+    const orders = []
+    try {
+        const { data } = await foodplaceApi.get(`/orders/search-assignment/${assignment_id}`)
+        for (const entry of Array.prototype.entries.call(data)) {
+            orders.push({...entry[1], orden: entry[0] + 1})
+        }
+        if (orders) {
+            orders.sort((a, b) => b.id - a.id)
+        }
+        return orders
+    } catch (error) {
+        return orders
     }
 }
 

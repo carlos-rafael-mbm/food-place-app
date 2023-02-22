@@ -164,7 +164,7 @@
                                             </div>
                                             <hr style="border-top: 5px solid; margin-bottom: 2px">
                                             <div class="text-center">
-                                                <v-btn prepend-icon="mdi-plus-circle" class="mt-1 mx-4" rounded color="#679A50" @click="nuevoItemMenu">Nueva categoría</v-btn>
+                                                <v-btn prepend-icon="mdi-plus-circle" class="mt-1 mx-4" rounded color="#679A50" @click="nuevoItemMenu">Nuevo ítem</v-btn>
                                                 <v-btn prepend-icon="mdi-content-save" class="mt-1 mx-5" rounded color="#679A50" @click="guardarItemMenu">Guardar</v-btn>
                                             </div>
                                         </v-expansion-panel-text>
@@ -190,7 +190,7 @@
                         :search-field="searchField"
                         :search-value="searchValue"
                         :theme-color="themeColor"
-                        :rows-per-page="5"
+                        :rows-per-page="10"
                         table-class-name="customize-table"
                         alternating
                         show-index
@@ -398,6 +398,8 @@ export default {
     async mounted() {
         await this.loadCategories()
         await this.loadPreparationAreas()
+        if (this.getActivePreparationAreas().length > 0)
+            this.item_menu.preparation_area = this.getActivePreparationAreas()[0]
         await this.loadItemsMenu()
         this.headers = [
             { text: "Nombre", value: "name", sortable: true },

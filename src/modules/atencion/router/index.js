@@ -21,12 +21,12 @@ export default {
             name: 'atencion-order-view',
             beforeEnter: [isAuthenticatedWaiter],
             component: () => import(/* webpackChunkName: "atencion-order-view" */ '@/modules/atencion/views/pedido/PedidoView.vue')
-        },
-        {
-            path: '/atencion/cobro',
-            name: 'atencion-cobro-view',
-            beforeEnter: [isAuthenticatedWaiter],
-            component: () => import(/* webpackChunkName: "atencion-cobro-view" */ '@/modules/atencion/views/pedido/PedidoCobroView.vue')
         }
+        // {
+        //     path: '/atencion/cobro',
+        //     name: 'atencion-cobro-view',
+        //     beforeEnter: [isAuthenticatedWaiter],
+        //     component: () => import(/* webpackChunkName: "atencion-cobro-view" */ '@/modules/atencion/views/pedido/PedidoCobroView.vue')
+        // }
     ]
 }

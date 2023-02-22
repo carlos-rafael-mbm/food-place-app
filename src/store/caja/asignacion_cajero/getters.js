@@ -10,3 +10,10 @@ export const getCashRegisterAssignmentsInOrder = (state) => () => {
     cash_register_assignments.sort((a, b) => b.id - a.id)
     return [...cash_register_assignments]
 }
+
+export const getCashRegisterAssignmentsClosedInOrder = (state) => () => {
+    const cash_register_assignments = [...state.cash_register_assignments.filter(a => a.state == 1)]
+    if (!cash_register_assignments) return
+    cash_register_assignments.sort((a, b) => b.id - a.id)
+    return [...cash_register_assignments]
+}

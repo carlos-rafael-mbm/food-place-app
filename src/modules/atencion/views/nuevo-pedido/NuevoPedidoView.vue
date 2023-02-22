@@ -56,46 +56,68 @@
             </div>
         </div>
         <div class="justify-content-center align-items-center">
-            <v-card
-                class="mx-auto pa-1 table-list animate__animated animate__flipInY"
-                max-width="800" max-height="400">
-                <v-list class="lista">
-                    <v-list-item
-                        v-for="(item, i) in active_menu"
-                        :key="i"
-                        :value="item"
-                        class="item-list">
+            <v-expansion-panels class="mx-auto panelActiveMenuGlobal" multiple v-model="itemsMenu">
+                <v-expansion-panel class="panelActiveMenu" v-for="category in categories" :key="category.id">
+                    <v-expansion-panel-title>
                         <template v-slot:default>
-                            <div class="d-flex justify-content-center align-items-center">
-                                <div class="left-control me-1">
-                                    <v-avatar v-if="item.item_menu.image" size="x-small">
-                                        <v-img
-                                            :src="item.item_menu.image"
-                                            alt="item-menu"
-                                            cover>
-                                        </v-img>
-                                    </v-avatar>
-                                    <v-avatar v-else size="x-small">
-                                        <v-icon icon="mdi-cancel"></v-icon>
-                                    </v-avatar>
-                                </div>
-                                <div>
-                                    <v-list-item-title class="titulo-menu" v-text="item.item_menu.name"></v-list-item-title>
-                                    <v-list-item-subtitle class="subtitulo-menu" v-text="item.item_menu.category.name"></v-list-item-subtitle>
-                                </div>
-                                <v-spacer></v-spacer>
-                                <div class="d-flex justify-content-right align-items-right">
-                                    <div class="text-right texto-cantidad">
-                                        <v-btn class="me-1" icon="mdi-minus-thick" size="25px" color="#856826" @click="item.amount <= 0 ? item.amount = 0 : item.amount--"></v-btn>
-                                        <input type="number" v-model="item.amount" min="0" max="1000" class="cantidad">
-                                        <v-btn class="ms-1" icon="mdi-plus-thick" size="25px" color="#856826" @click="item.amount >= 1000 ? item.amount = 1000 : item.amount++"></v-btn>
-                                    </div>
-                                </div>
-                            </div>
+                            <v-row no-gutters>
+                                <v-col cols="6" class="d-flex justify-start">
+                                    {{ category.name }}
+                                </v-col>
+                                <v-col v-if="category.is_block == 1" cols="6" class="text-brown text-right">
+                                    <input type="number" v-model="category.amount" min="0" max="1000" class="cantidad me-5">
+                                </v-col>
+                            </v-row>
                         </template>
-                    </v-list-item>
-                </v-list>
-            </v-card>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                        <div v-if="category.is_block == 1" class="d-flex justify-content-center align-items-center">
+                            <v-btn style="font-size: small" class="me-1 mb-2" prepend-icon="mdi-minus-thick" color="#856826" @click="category.amount <= 0 ? category.amount = 0 : category.amount--; disminuirEnBloque(category.id, category.amount)">Disminuir</v-btn>
+                            <v-btn style="font-size: small"  class="ms-1 mb-2" prepend-icon="mdi-plus-thick" color="#856826" @click="category.amount >= 1000 ? category.amount = 1000 : category.amount++; aumentarEnBloque(category.id, category.amount)">Aumentar</v-btn>
+                        </div>
+                        <v-card
+                            class="mx-auto table-list animate__animated animate__flipInY"
+                            max-height="400">
+                            <v-list class="lista">
+                                <v-list-item
+                                    v-for="(item, i) in getActiveMenuByCategory(category.id)"
+                                    :key="i"
+                                    :value="item"
+                                    class="item-list">
+                                    <template v-slot:default>
+                                        <div class="d-flex justify-content-center align-items-center">
+                                            <div class="left-control me-1">
+                                                <v-avatar v-if="item.item_menu.image" size="x-small">
+                                                    <v-img
+                                                        :src="item.item_menu.image"
+                                                        alt="item-menu"
+                                                        cover>
+                                                    </v-img>
+                                                </v-avatar>
+                                                <v-avatar v-else size="x-small">
+                                                    <v-icon icon="mdi-cancel"></v-icon>
+                                                </v-avatar>
+                                            </div>
+                                            <div>
+                                                <v-list-item-title class="titulo-menu" v-text="item.item_menu.name"></v-list-item-title>
+                                                <!-- <v-list-item-subtitle class="subtitulo-menu" v-text="item.item_menu.category.name"></v-list-item-subtitle> -->
+                                            </div>
+                                            <v-spacer></v-spacer>
+                                            <div class="d-flex justify-content-right align-items-right">
+                                                <div class="text-right texto-cantidad">
+                                                    <v-btn class="me-1" icon="mdi-minus-thick" size="25px" color="#856826" @click="item.amount <= 0 ? item.amount = 0 : item.amount--"></v-btn>
+                                                    <input type="number" v-model="item.amount" min="0" max="1000" class="cantidad">
+                                                    <v-btn class="ms-1" icon="mdi-plus-thick" size="25px" color="#856826" @click="item.amount >= 1000 ? item.amount = 1000 : item.amount++"></v-btn>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </v-list-item>
+                            </v-list>
+                        </v-card>
+                    </v-expansion-panel-text>
+                </v-expansion-panel>
+            </v-expansion-panels>
             <div class="text-center mt-3">
                 <v-textarea
                     bg-color="amber-lighten-4"
@@ -185,9 +207,11 @@ export default {
             mesa_id: 0,
             mesa_number: '',
             personalizacion: '',
+            categories: [],
             dialog: false,
             fecha: null,
-            items: []
+            items: [],
+            itemsMenu: []
         }
     },
     computed: {
@@ -199,6 +223,15 @@ export default {
     methods: {
         ...mapActions('mesa', ['loadTables']),
         ...mapActions('pedido', ['loadActiveMenu', 'createOrder', 'createOrderDetail', 'createAssignmentOrder', 'clearOrderComplete']),
+        getActiveMenuByCategory(id) {
+            return this.active_menu.filter(item => item.item_menu.category.id == id)
+        },
+        disminuirEnBloque(id, amount) {
+            this.active_menu.map(item => {if (item.item_menu.category.id == id) item.amount = amount})
+        },
+        aumentarEnBloque(id, amount) {
+            this.active_menu.map(item => {if (item.item_menu.category.id == id) item.amount = amount})
+        },
         cargarMesa(id, number, isSelected) {
             this.mesa_id = !isSelected? id : 0
             this.mesa_number = number
@@ -223,8 +256,6 @@ export default {
             let order_id = 0
             const formData = new FormData()
             formData.append('state', 0)
-            formData.append('client_id', 0)
-            formData.append('promotion_id', 0)
             formData.append('table_id', this.mesa_id)
             if (this.personalizacion)
                 formData.append('customization', this.personalizacion)
@@ -287,7 +318,9 @@ export default {
             this.personalizacion = ''
             this.opciones = []
             this.active_menu.map(x => x.amount = 0)
+            this.categories.map(x => x.amount = 0)
             this.clearOrderComplete()
+            this.itemsMenu = []
             this.items = []
             this.dialog = false
         }
@@ -296,6 +329,15 @@ export default {
         await this.loadTables()
         await this.loadActiveMenu()
         await this.clearOrderComplete()
+        const map = new Map()
+        for (const item of this.active_menu) {
+            if(!map.has(item.item_menu.category.id)){
+                map.set(item.item_menu.category.id, true)    // set any value to Map
+                const nuevo = item.item_menu.category
+                nuevo.amount = 0
+                this.categories.push(nuevo)
+            }
+        }
         this.tablesOrdered = await this.getTablesInOrder()
         this.isLoading = false
     }
@@ -331,7 +373,7 @@ export default {
 }
 .table-list {
     background-color: rgba(241, 196, 15, 0.3);
-    width: 67%;
+    width: 100%;
     overflow-y: auto;
 }
 .area-custom {
@@ -364,6 +406,16 @@ export default {
 }
 .subtitulo-menu {
     font-size: 0.9em;
+}
+.panelActiveMenuGlobal {
+    width: 60%;
+}
+.panelActiveMenu {
+    // background-color: rgba(246, 242, 116, 0.2);
+    background-color: rgba(241, 196, 15, 0.6);
+    width: 100%;
+    border-radius: 20px;
+    color: black;
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -435,9 +487,6 @@ input::-webkit-inner-spin-button {
     .slide-table {
         width: 92%;
     }
-    .table-list {
-        width: 92%;
-    }
     .area-custom {
         width: 92%;
     }
@@ -469,6 +518,9 @@ input::-webkit-inner-spin-button {
     }
     .subtitulo-menu {
         font-size: 1.05em;
+    }
+    .panelActiveMenuGlobal {
+        width: 97%;
     }
 }
 </style>
