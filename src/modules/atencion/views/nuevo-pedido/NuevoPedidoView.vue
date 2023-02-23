@@ -56,8 +56,8 @@
             </div>
         </div>
         <div class="justify-content-center align-items-center">
-            <v-expansion-panels class="mx-auto panelActiveMenuGlobal" multiple v-model="itemsMenu">
-                <v-expansion-panel class="panelActiveMenu" v-for="category in categories" :key="category.id">
+            <v-expansion-panels class="mx-auto panel-active-menu-global" multiple v-model="itemsMenu">
+                <v-expansion-panel class="panel-active-menu animate__animated animate__flipInY" v-for="category in categories" :key="category.id">
                     <v-expansion-panel-title>
                         <template v-slot:default>
                             <v-row no-gutters>
@@ -76,7 +76,7 @@
                             <v-btn style="font-size: small"  class="ms-1 mb-2" prepend-icon="mdi-plus-thick" color="#856826" @click="category.amount >= 1000 ? category.amount = 1000 : category.amount++; aumentarEnBloque(category.id, category.amount)">Aumentar</v-btn>
                         </div>
                         <v-card
-                            class="mx-auto table-list animate__animated animate__flipInY"
+                            class="mx-auto table-list"
                             max-height="400">
                             <v-list class="lista">
                                 <v-list-item
@@ -407,15 +407,25 @@ export default {
 .subtitulo-menu {
     font-size: 0.9em;
 }
-.panelActiveMenuGlobal {
-    width: 60%;
+.panel-active-menu-global {
+    width: 50%;
 }
-.panelActiveMenu {
+.panel-active-menu {
     // background-color: rgba(246, 242, 116, 0.2);
     background-color: rgba(241, 196, 15, 0.6);
     width: 100%;
     border-radius: 20px;
     color: black;
+}
+.v-expansion-panel-text:deep(.v-expansion-panel-text__wrapper) {
+    padding: 5px 5px 10px 5px;
+}
+.v-list {
+    padding: 0px;
+}
+.v-list-item--density-default:not(.v-list-item--nav).v-list-item--one-line {
+    padding-inline-start: 8px;
+    padding-inline-end: 8px;
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -519,7 +529,7 @@ input::-webkit-inner-spin-button {
     .subtitulo-menu {
         font-size: 1.05em;
     }
-    .panelActiveMenuGlobal {
+    .panel-active-menu-global {
         width: 97%;
     }
 }
