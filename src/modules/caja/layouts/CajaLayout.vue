@@ -30,7 +30,7 @@
                         <label v-if="user.employee">Hola, {{ user.employee.name }}</label>
                     </div>
                     <v-list-item
-                        v-if="getUser.role.id == 1"
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-lock-open-outline"
                         title="Apertura"
                         value="apertura"
@@ -63,7 +63,7 @@
                         class="bg-cream"
                         @click="$router.push({name: 'caja-consultation-view'})"></v-list-item>
                     <v-list-item
-                        v-if="getUser.role.id == 1"
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-lock-outline"
                         title="Cierre"
                         value="cierre"

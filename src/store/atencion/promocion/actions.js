@@ -24,7 +24,7 @@ export const loadActivePromotions = async({commit}) => {
             promotions.push({...entry[1], orden: entry[0] + 1})
         }
         if (promotions) {
-            promotions = [...promotions.filter(x => x.state == 1 && (new Date(x.start_date) <= Date.now() && Date.now() <= new Date(x.end_date)))]
+            promotions = [...promotions.filter(x => x.state == 1 && (new Date(x.start_date) <= Date.now() && Date.now() <= (new Date(x.end_date + ' GMT-0500').setDate((new Date(x.end_date + ' GMT-0500')).getDate() + 1))))]
             promotions.sort((a, b) => b.id - a.id)
         }
         commit('setPromotions', promotions)

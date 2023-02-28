@@ -56,7 +56,7 @@
                         @click="$router.push({name: 'alm-supply-view'})"></v-list-item>
                     <v-list-item
                         prepend-icon="mdi-warehouse"
-                        title="Sucursal"
+                        title="Almacén"
                         value="almacen"
                         active-class="bgYellowActive animate__animated animate__animated animate__bounceIn"
                         density="compact"

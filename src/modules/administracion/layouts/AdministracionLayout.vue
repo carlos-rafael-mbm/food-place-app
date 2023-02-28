@@ -55,6 +55,7 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-menu-view'})"></v-list-item>
                     <v-list-item
+                        v-if="user.role && user.role.id == 10000"
                         prepend-icon="mdi-percent-circle"
                         title="Promociones"
                         value="promociones"
@@ -62,8 +63,9 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-promo-view'})"></v-list-item>
-                    <v-list-subheader color="white">LOCAL</v-list-subheader>
+                    <v-list-subheader color="white" v-if="user.role && (user.role.id == 1 || user.role.id == 9)">LOCAL</v-list-subheader>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-chef-hat"
                         title="Área de preparación"
                         value="area_preparacion"
@@ -72,6 +74,7 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-preparation-area-view'})"></v-list-item>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-table-chair"
                         title="Mesas"
                         value="mesas"
@@ -80,6 +83,7 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-table-view'})"></v-list-item>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-cash-register"
                         title="Cajas registradoras"
                         value="caja_registradora"
@@ -88,6 +92,7 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-cash-register-view'})"></v-list-item>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-account-circle"
                         title="Clientes"
                         value="clientes"
@@ -95,8 +100,9 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-client-view'})"></v-list-item>
-                    <v-list-subheader color="white">PERSONAL</v-list-subheader>
+                    <v-list-subheader color="white" v-if="user.role && (user.role.id == 1 || user.role.id == 9)">PERSONAL</v-list-subheader>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-clipboard-account"
                         title="Empleados"
                         value="empleados"
@@ -105,6 +111,7 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-employee-view'})"></v-list-item>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-shield-account"
                         title="Usuarios"
                         value="usuarios"
@@ -112,8 +119,9 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-user-view'})"></v-list-item>
-                    <v-list-subheader color="white">PARÁMETROS</v-list-subheader>
+                    <v-list-subheader color="white" v-if="user.role && (user.role.id == 1 || user.role.id == 9)">PARÁMETROS</v-list-subheader>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-cog-outline"
                         title="Parámetros"
                         value="parametros"
@@ -121,8 +129,9 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-parameter-view'})"></v-list-item>
-                    <v-list-subheader color="white">REPORTES</v-list-subheader>
+                    <v-list-subheader color="white" v-if="user.role && (user.role.id == 1 || user.role.id == 9)">REPORTES</v-list-subheader>
                     <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-finance"
                         title="Reporte de ventas"
                         value="reporte_ventas"
@@ -130,6 +139,15 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-sale-report-view'})"></v-list-item>
+                    <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
+                        prepend-icon="mdi-monitor-dashboard"
+                        title="Dashboard de ventas"
+                        value="dashboard_ventas"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-dashboard-view'})"></v-list-item>
                 </v-list>
             </v-navigation-drawer>
 

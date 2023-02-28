@@ -82,5 +82,11 @@ export default {
             beforeEnter: [isAuthenticatedAdmin],
             component: () => import(/* webpackChunkName: "administracion-sale-report-view" */ '@/modules/administracion/views/reporte/ReportePedidoView.vue')
         },
+        {
+            path: '/administracion/dashboard-ventas',
+            name: 'adm-dashboard-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-dashboard-view" */ '@/modules/administracion/views/dashboard/DashboardView.vue')
+        }
     ]
 }
