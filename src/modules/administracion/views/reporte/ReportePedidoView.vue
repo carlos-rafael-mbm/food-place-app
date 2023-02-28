@@ -86,14 +86,6 @@
                         body-text-direction="center"
                         empty-message="No hay datos de pedidos en la fecha indicada"
                         @click-row="cargarDetalle">
-                        <template #expand="item">
-                            <div v-if="item.promotion_name" class="text-left ps-15">
-                                {{item.promotion_name}}
-                            </div>
-                            <div v-else class="text-left ps-15">
-                                No se aplicó promoción
-                            </div>
-                        </template>
                     </easy-data-table>
                 </div>
             </div>
@@ -197,7 +189,7 @@ export default {
         }
     },
     methods: {
-        ...mapActions('pedido', ['loadOrdersReport', 'loadOrderDetails', 'clearOrderDetails']),
+        ...mapActions('pedido', ['loadOrdersReport', 'loadOrderDetailsByVoucher', 'clearOrderDetails']),
         getFechaActual() {
             const date = new Date(Date.now())
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
@@ -237,9 +229,8 @@ export default {
             Swal.close()
         },
         async cargarDetalle(item) {
-            await this.loadOrderDetails(item.id)
+            await this.loadOrderDetailsByVoucher([item.serie, item.correlative])
             if (this.order_details) {
-                console.log(this.order_details)
                 this.getOrdersDetailGroupByItem()
                 this.dialog = true
             }
@@ -283,7 +274,6 @@ export default {
                         x.correlative ? `${x.serie}-${x.correlative}` : 'Sin comprobante',
                         x.order_time,
                         x.table_number,
-                        x.promotion_name ? x.promotion_name : 'No aplicó promoción',
                         x.cantidad_items,
                         'S/ ' + x.total
                     ]
@@ -308,13 +298,11 @@ export default {
                                     2: { halign:'center', lineWidth: { top: 0.2, bottom: 0.2}, lineColor: [0, 0, 0] },
                                     3: { halign:'center', lineWidth: { top: 0.2, bottom: 0.2}, lineColor: [0, 0, 0] },
                                     4: { halign:'center', lineWidth: { top: 0.2, bottom: 0.2}, lineColor: [0, 0, 0] },
-                                    5: { halign:'center', lineWidth: { top: 0.2, bottom: 0.2}, lineColor: [0, 0, 0] },
-                                    6: { halign:'right', lineWidth: { top: 0.2, bottom: 0.2, right: 0.2 }, lineColor: [0, 0, 0] } }, // Cells in first column centered and green
+                                    5: { halign:'right', lineWidth: { top: 0.2, bottom: 0.2, right: 0.2 }, lineColor: [0, 0, 0] } }, // Cells in first column centered and green
                     head: [[{content:'#', styles:{halign:'center',lineWidth: {top:0.2, left:0.2, bottom:0.2, right: 0}, lineColor: [0, 0, 0]}},
                             {content:'COMPROBANTE', styles:{halign:'center',lineWidth: {top:0.2, left:0, bottom:0.2, right: 0}, lineColor: [0, 0, 0]}},
                             {content:'FECHA PEDIDO', styles:{halign:'center',lineWidth: {top:0.2, left:0, bottom:0.2, right: 0}, lineColor: [0, 0, 0]}},
                             {content:'N° MESA', styles:{halign:'center',lineWidth: {top: 0.2, left: 0, bottom: 0.2, right: 0}, lineColor: [0, 0, 0]}},
-                            {content:'PROMOCIÓN', styles:{halign:'center',lineWidth: {top: 0.2, left: 0, bottom: 0.2, right: 0}, lineColor: [0, 0, 0]}},
                             {content:'CANTIDAD ÍTEMS', styles:{halign:'center',lineWidth: {top: 0.2, left: 0, bottom: 0.2, right: 0}, lineColor: [0, 0, 0]}},
                             {content:'TOTAL', styles:{halign:'center',lineWidth: {top: 0.2, left: 0, bottom: 0.2, right: 0.2}, lineColor: [0, 0, 0]}}]],
                     body: arrayOrders,

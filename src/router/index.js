@@ -6,7 +6,7 @@ import cocinaRouter from "@/modules/cocina/router"
 import cajaRouter from "@/modules/caja/router";
 import authRouter from "@/modules/autenticacion/router"
 import almacenRouter from "@/modules/almacen/router";
-import {isAuthenticatedGuard, isAuthenticatedAdmin, isAuthenticatedWaiter, isAuthenticatedCook, isAuthenticatedCashier} from '@/modules/autenticacion/router/auth-guard'
+import {isAuthenticatedGuard, isAuthenticatedAdmin, isAuthenticatedWaiter, isAuthenticatedCook, isAuthenticatedCashier, isAuthenticatedStorekeeper} from '@/modules/autenticacion/router/auth-guard'
 
 const routes = [
   {
@@ -37,7 +37,7 @@ const routes = [
   },
   {
     path: '/almacen',
-    beforeEnter: [isAuthenticatedAdmin],
+    beforeEnter: [isAuthenticatedStorekeeper],
     ...almacenRouter
   },
   {

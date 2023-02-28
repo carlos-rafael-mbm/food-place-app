@@ -109,10 +109,58 @@ export const loadOrdersByAssigment = async(_, assignment_id) => {
     }
 }
 
+export const loadMostRequestedItemsByMonth = async(_, filter) => {
+    const orders = []
+    const year = filter[0]
+    const month = filter[1]
+    try {
+        const { data } = await foodplaceApi.get(`/orders/report/${year}/${month}`)
+        for (const entry of Array.prototype.entries.call(data)) {
+            orders.push({...entry[1], orden: entry[0] + 1})
+        }
+        return orders
+    } catch (error) {
+        return orders
+    }
+}
+
+export const loadEmployeeProductivity = async(_, filter) => {
+    const orders = []
+    const year = filter[0]
+    const month = filter[1]
+    try {
+        const { data } = await foodplaceApi.get(`/orders/report-productivity/${year}/${month}`)
+        for (const entry of Array.prototype.entries.call(data)) {
+            orders.push({...entry[1], orden: entry[0] + 1})
+        }
+        return orders
+    } catch (error) {
+        return orders
+    }
+}
+
 export const loadOrderDetails = async({commit}, id) => {
     let order_details = []
     try {
         const { data } = await foodplaceApi.get(`/order_detail/search-order/${id}`)
+        for (const entry of Array.prototype.entries.call(data)) {
+            order_details.push({...entry[1], orden: entry[0] + 1})
+        }
+        if (order_details)
+            order_details.sort((a, b) => a.menu_detail.item_menu.category.id - b.menu_detail.item_menu.category.id)
+    } catch (error) {
+        order_details = []
+    } finally {
+        commit('setOrderDetails', order_details)
+    }
+}
+
+export const loadOrderDetailsByVoucher = async({commit}, comprobante) => {
+    let order_details = []
+    const serie = comprobante[0]
+    const correlative = comprobante[1]
+    try {
+        const { data } = await foodplaceApi.get(`/order_detail/search-order/${serie}/${correlative}`)
         for (const entry of Array.prototype.entries.call(data)) {
             order_details.push({...entry[1], orden: entry[0] + 1})
         }

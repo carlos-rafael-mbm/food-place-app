@@ -77,7 +77,7 @@
                         :headers="headers"
                         :items="supplies"
                         :theme-color="themeColor"
-                        :rows-per-page="5"
+                        :rows-per-page="15"
                         table-class-name="customize-table"
                         alternating
                         show-index

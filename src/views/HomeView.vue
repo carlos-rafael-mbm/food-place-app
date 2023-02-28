@@ -7,11 +7,11 @@
       <div class="col-12 text-center">
         <img alt="Empresa" src="../assets/logo.jpg" height="200">
         <h1 class="text-light my-3 titulo">Bienvenidos al sistema de {{ getRazonSocial }}</h1>
-        <v-btn v-if="user.role && user.role.id == 1" prepend-icon="mdi-account-tie-hat" class="boton" rounded color="#F1C40F" size="large" @click="ir_Administracion">Administración</v-btn>
-        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 2)" prepend-icon="mdi-text-box-edit" class="boton" rounded color="#856826" size="large" @click="ir_Atencion">Atención</v-btn>
-        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 3)" prepend-icon="mdi-chef-hat" class="boton" rounded color="#679A50" size="large" @click="ir_Cocina">Cocina</v-btn>
-        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 4)" prepend-icon="mdi-cash-register" class="boton" rounded color="#E3CD83" size="large" @click="ir_Caja">Caja</v-btn>
-        <v-btn v-if="user.role && user.role.id == 1" prepend-icon="mdi-store-cog" class="boton" rounded color="#E75D48" size="large" @click="ir_Almacen">Almacén</v-btn>
+        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 6)" prepend-icon="mdi-account-tie-hat" class="boton" rounded color="#F1C40F" size="large" @click="ir_Administracion">Administración</v-btn>
+        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 2)" prepend-icon="mdi-text-box-edit" class="boton" rounded color="#856826" size="large" @click="ir_Atencion">Atención</v-btn>
+        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 3 || user.role.id == 10 || user.role.id == 11 || user.role.id == 12)" prepend-icon="mdi-chef-hat" class="boton" rounded color="#679A50" size="large" @click="ir_Cocina">Cocina</v-btn>
+        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 4)" prepend-icon="mdi-cash-register" class="boton" rounded color="#E3CD83" size="large" @click="ir_Caja">Caja</v-btn>
+        <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 5 || user.role.id == 13)" prepend-icon="mdi-store-cog" class="boton" rounded color="#E75D48" size="large" @click="ir_Almacen">Almacén</v-btn>
       </div>
       <div class="texto text-center">
         <v-expansion-panels>

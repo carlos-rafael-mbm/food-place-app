@@ -216,7 +216,7 @@ export default {
         }
     },
     async mounted() {
-        if (this.getUser.role.id == 1) {
+        if (this.getUser.role.id == 1 || this.getUser.role.id == 9) {
             await this.loadCashRegisterAssignments()
             await this.loadCashRegisters()
             await this.loadEmployees()

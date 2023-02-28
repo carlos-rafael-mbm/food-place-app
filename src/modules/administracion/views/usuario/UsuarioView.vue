@@ -110,7 +110,7 @@
                     :search-field="searchField"
                     :search-value="searchValue"
                     :theme-color="themeColor"
-                    :rows-per-page="5"
+                    :rows-per-page="10"
                     table-class-name="customize-table"
                     alternating
                     show-index

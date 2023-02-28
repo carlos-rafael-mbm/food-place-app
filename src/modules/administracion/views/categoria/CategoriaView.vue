@@ -89,7 +89,7 @@
                 </v-form>
                 <div id="tablaCategorias" class="animate__animated animate__flipInY">
                     <div class="align-center">
-                        <v-table height="36vh" density="compact" class="fondo-tabla">
+                        <v-table height="100vh" density="compact" class="fondo-tabla">
                             <thead class="text-white text-center">
                                 <tr>
                                     <th scope="col" style="width: 10px" class="border-top-0 border-end">#</th>

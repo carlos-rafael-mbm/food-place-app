@@ -22,10 +22,26 @@
             </div>
         </div>
         <div class="justify-content-center align-items-center" style="margin-bottom: 100px">
+            <div class="justify-content-center align-items-center mt-4" style="margin-bottom: -12px">
+                <div id="formulario" class="animate__animated animate__flipInY mx-auto">
+                    <div class="justify-content-center align-items-center">
+                        <v-combobox
+                            v-model="table"
+                            :items="getActiveTables()"
+                            item-value="id"
+                            item-title="number"
+                            label="Seleccione una mesa"
+                            variant="solo"
+                            bg-color="#E3CD83"
+                            :change="cargarPedidos()">
+                        </v-combobox>
+                    </div>
+                </div>
+            </div>
             <v-container fluid>
                 <v-row dense>
                     <v-col
-                        v-for="order in getOrdersToPay"
+                        v-for="order in getOrdersByTable"
                         :key="order.id"
                         :cols="widthScreen">
                         <v-card :class="order.state == 0 ? 'bg-solicitado' : order.state == 1 ? 'bg-en-proceso' : order.state == 2 || order.state == 5 ? 'bg-atendido' : order.state == 3 ? 'bg-cancelado' : 'bg-preparado'">
@@ -47,11 +63,42 @@
                                     @click="verPedido(order.id, order.state)">
                                     Ver
                                 </v-btn>
+                                <v-btn
+                                    v-if="listOrderIds.indexOf(order.id) == -1"
+                                    prepend-icon="mdi-radiobox-blank"
+                                    class="mx-1"
+                                    size="x-small"
+                                    color="blue"
+                                    @click="agregarItems(order.id)">
+                                    Seleccionar
+                                </v-btn>
+                                <v-btn
+                                    v-if="listOrderIds.indexOf(order.id) >= 0"
+                                    prepend-icon="mdi-check-circle-outline"
+                                    class="mx-1"
+                                    size="x-small"
+                                    color="blue"
+                                    @click="retirarItems(order.id)">
+                                    Quitar selección
+                                </v-btn>
                             </div>
                         </v-card>
                     </v-col>
                 </v-row>
             </v-container>
+            <div class="d-flex justify-content-center align-items-center mt-4 animate__animated animate__flipInY" style="margin-bottom: -12px">
+                <div class="mx-auto">
+                    <v-btn
+                        v-if="getOrdersByTable.length > 0"
+                        prepend-icon="mdi-cash-multiple"
+                        class="mx-1 text-white"
+                        size="x-large"
+                        color="#856826"
+                        @click="verCobroGlobal()">
+                        Cobrar
+                    </v-btn>
+                </div>
+            </div>
         </div>
     </div>
     <v-row justify="space-around">
@@ -61,13 +108,14 @@
                     <v-toolbar color="#679a50">
                         <div style="margin-left: 5%"><strong>Detalle de orden</strong></div>
                         <v-spacer></v-spacer>
-                        <div v-if="estado == 2" style="margin-right: 5%">
+                        <div v-if="isPayment" style="margin-right: 5%">
                             <v-checkbox
+                                v-if="toEdit"
                                 label="Aplicar promoción"
                                 color="brown"
                                 hide-details
                                 v-model="disabled"
-                                @change="toEdit = !toEdit">
+                                @change="toEdit = toEdit">
                             </v-checkbox>
                         </div>
                     </v-toolbar>
@@ -84,7 +132,7 @@
                             </v-combobox>
                         </div>
                         <v-list-item
-                            v-for="(item, i) in order_details_agrupado"
+                            v-for="(item, i) in isPayment ? listOrderDetailsGroup : order_details"
                             :key="i"
                             :value="item"
                             class="itemList">
@@ -205,7 +253,7 @@
                         </div>
                     </v-list>
                     <v-card-actions class="justify-center">
-                        <v-btn v-if="estado == 2" prepend-icon="mdi-currency-usd" color="white" variant="outlined" @click="generaDoc = !generaDoc; tipoDoc = 0">Registrar pago</v-btn>
+                        <v-btn v-if="isPayment" prepend-icon="mdi-currency-usd" color="white" variant="outlined" @click="generaDoc = !generaDoc; tipoDoc = 0">Registrar pago</v-btn>
                         <v-btn prepend-icon="mdi-close-circle" color="white" variant="outlined" @click="limpiar()">Cerrar</v-btn>
                     </v-card-actions>
                 </v-card>
@@ -228,11 +276,12 @@ export default {
         return {
             isLoading: true,
             widthScreen: window.innerWidth >= 800 ? 4 : window.innerWidth >= 600 ? 6 : 12,
-            idInterval: 0,
-            orderId: 0,
-            estado: 0,
+            listOrderIds: [],
+            listOrderDetailsSelected: [],
+            listOrderDetails: [],
+            listOrderDetailsGroup: [],
+            isPayment: false,
             dialog: false,
-            order_details_agrupado: [],
             toEdit: false,
             disabled: false,
             rules: {
@@ -245,6 +294,7 @@ export default {
                 }
             },
             aplicaPromocion: 0,
+            table: null,
             promotion: {
                 id: 0,
                 name: '',
@@ -277,17 +327,24 @@ export default {
         ...mapState('pedido', ['orders', 'orders_all', 'order_details']),
         ...mapState('promocion', ['promotions']),
         ...mapState('parametro', ['parameters']),
+        ...mapGetters('mesa', ['getActiveTables']),
         ...mapGetters('login', ['getUser']),
-        getOrdersToPay: function() {
-            return this.orders.filter(ord => ord.state != 3)
+        getOrdersByTable: function() {
+            return this.orders.filter(ord => ord.table.id == this.table.id)
         },
         getTotal: function() {
-            return this.order_details_agrupado.reduce((accumulator, object) => {
+            return this.isPayment ? this.listOrderDetailsGroup.reduce((accumulator, object) => {
+                return accumulator + (object.amount * object.price)
+            }, 0) :
+            this.order_details.reduce((accumulator, object) => {
                 return accumulator + (object.amount * object.price)
             }, 0)
         },
         getTotalNoIGV: function() {
-            return this.order_details_agrupado.reduce((accumulator, object) => {
+            return this.isPayment ? this.listOrderDetailsGroup.reduce((accumulator, object) => {
+                return accumulator + (object.amount * ((object.price * 100) / (100 + this.montoIgv)))
+            }, 0) :
+            this.order_details.reduce((accumulator, object) => {
                 return accumulator + (object.amount * ((object.price * 100) / (100 + this.montoIgv)))
             }, 0)
         }
@@ -296,6 +353,7 @@ export default {
         ...mapActions('pedido', ['loadOrders', 'loadAllOrders', 'loadOrderDetails', 'clearOrderComplete', 'clearOrderDetails', 'updateOrder', 'updateOrderDetail', 'createAssignmentOrder']),
         ...mapActions('promocion', ['loadActivePromotions']),
         ...mapActions('parametro', ['loadParameters']),
+        ...mapActions('mesa', ['loadTables']),
         ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByEmployee']),
         getWidthScreen() {
             if (window.innerWidth >= 800) {
@@ -306,18 +364,20 @@ export default {
                 this.widthScreen = 12
             }
         },
-        getOrdersDetailGroupByItem() {
-            const res = this.order_details.reduce((accumulator, object) => {
-                let idx = accumulator[0].indexOf(object.menu_detail.item_menu.id)
-                if (idx > -1) {
-                    accumulator[1][idx].amount += object.amount
-                } else {
-                    accumulator[0].push(object.menu_detail.item_menu.id)
-                    accumulator[1].push(object)
-                }
-                return accumulator
-            }, [[],[]])
-            this.order_details_agrupado = res[1]
+        async cargarPedidos() {
+            if (this.table) {
+                await this.loadOrders()
+            }
+        },
+        async agregarItems(id) {
+            this.listOrderIds.push(id)
+            await this.loadOrderDetails(id)
+            for (const item of this.order_details)
+                this.listOrderDetailsSelected.push(item)
+        },
+        retirarItems(id) {
+            this.listOrderIds.splice(this.listOrderIds.indexOf(id), 1)
+            this.listOrderDetailsSelected = [...this.listOrderDetailsSelected.filter(detail => detail.order.id != id)]
         },
         async getMaxCorrelative(voucherType) {
             let maxValue = 0
@@ -331,11 +391,42 @@ export default {
             }
             return maxValue.toString().padStart(6, '0')
         },
-        async verPedido(id, state) {
-            this.orderId = id
-            this.estado = state
+        itemExist(array, itemMenuId) {
+            let i = 0
+            while (i < array.length) {
+                if (array[i].menu_detail.item_menu.id == itemMenuId) return i
+                i++
+            }
+            return -1;
+        },
+        getOrdersDetailGroupByItem() {
+            const res = this.listOrderDetails.reduce((accumulator, object) => {
+                let idx = accumulator[0].indexOf(object.menu_detail.item_menu.id)
+                if (idx > -1) {
+                    accumulator[1][idx].amount += object.amount
+                } else {
+                    accumulator[0].push(object.menu_detail.item_menu.id);
+                    accumulator[1].push(object);
+                }
+                return accumulator;
+            }, [[],[]])
+            this.listOrderDetailsGroup = Array.from(res[1])
+        },
+        async verPedido(id) {
+            this.isPayment = false
             this.toEdit = false
             await this.loadOrderDetails(id)
+            this.dialog = true
+        },
+        async verCobroGlobal() {
+            this.isPayment = true
+            this.toEdit = false
+            this.listOrderDetails = []
+            for (const id of this.listOrderIds) {
+                await this.loadOrderDetails(id)
+                for (const item of this.order_details)
+                    this.listOrderDetails.push(item)
+            }
             this.getOrdersDetailGroupByItem()
             this.dialog = true
         },
@@ -533,7 +624,7 @@ export default {
                 // Construir detalle
                 const arrayOrderDetail = []
                 let k = 1
-                this.order_details_agrupado.map(x => {
+                this.listOrderDetailsGroup.map(x => {
                     const detalle = [
                         k,
                         `${x.amount.toFixed(2)} NIU`,
@@ -672,7 +763,7 @@ export default {
             comprobante.mtoImpVenta = total
             // Construir detalle
             comprobante.details = []
-            this.order_details_agrupado.map(x => {
+            this.listOrderDetailsGroup.map(x => {
                 const detalle = {}
                 detalle.unidad = 'NIU'
                 detalle.descripcion = x.menu_detail.item_menu.name
@@ -713,7 +804,6 @@ export default {
                 URL.revokeObjectURL(url)
                 return true
             } catch (error) {
-                console.log(error)
                 await Swal.fire({
                     position: 'top-end',
                     text: 'Error al generar Comprobante ',
@@ -737,24 +827,10 @@ export default {
                 formData.append('correlative', this.correlativo)
             }
             formData.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
-            res = await this.updateOrder([this.orderId, formData])
-            if (res[0] != 0) {
-                if (this.toEdit) {
-                    let hasError = false
-                    for (const item of this.order_details) {
-                        const formDetalle = new FormData()
-                        formDetalle.append('price', item.price)
-                        const resDetalle = await this.updateOrderDetail([item.id, formDetalle])
-                        if (resDetalle[0] == 0) {
-                            hasError = true
-                        }
-                    }
-                    if (hasError) {
-                        Swal.fire('Error', 'El pago se realizó con errores en los precios', 'error')
-                    }
-                }
+            for (const id of this.listOrderIds) {
+                res = await this.updateOrder([id, formData])
                 const formAsignacion = new FormData()
-                formAsignacion.append('order_id', this.orderId)
+                formAsignacion.append('order_id', id)
                 formAsignacion.append('employee_id', this.getUser.employee.id)
                 formAsignacion.append('process_id', 5)
                 let resAsign = await this.createAssignmentOrder(formAsignacion)
@@ -768,6 +844,23 @@ export default {
                         timer: 1200
                     })
                 }
+            }
+            if (res[0] != 0) {
+                if (this.toEdit) {
+                    let hasError = false
+                    console.log(this.listOrderDetailsSelected)
+                    for (const item of this.listOrderDetailsSelected) {
+                        const formDetalle = new FormData()
+                        formDetalle.append('price', item.price)
+                        const resDetalle = await this.updateOrderDetail([item.id, formDetalle])
+                        if (resDetalle[0] == 0) {
+                            hasError = true
+                        }
+                    }
+                    if (hasError) {
+                        Swal.fire('Error', 'El pago se realizó con errores en los precios', 'error')
+                    }
+                }
                 Swal.fire('Cobro exitoso', 'Se realizó el pago correctamente', 'success')
             } else {
                 Swal.fire('Error', 'Error no se pudo realizar el pago. ' + res[1], 'error')
@@ -777,7 +870,6 @@ export default {
         limpiar() {
             this.dialog = false
             this.clearOrderDetails()
-            this.orderId = 0
             this.toEdit = false
             this.disabled = false
             this.promotion.id = 0
@@ -815,15 +907,11 @@ export default {
         if (!this.cashRegisterAssignment) {
             Swal.fire('Error', 'No tiene asignado una caja registradora para realizar esta operación', 'error')
         } else {
-            await this.loadOrders()
-            this.idInterval = setInterval(() => {
-                this.loadOrders()
-            }, 1000 * 30)
+            await this.loadTables()
         }
     },
     unmounted() {
         window.removeEventListener("resize", this.getWidthScreen)
-        clearInterval(this.idInterval)
     }
 }
 </script>
@@ -840,6 +928,9 @@ export default {
     border-radius: 20px;
     font-size: 32px;
     width: 300px;
+}
+#formulario {
+    width: 40%;
 }
 .bg-solicitado {
     background-color: rgba(241, 196, 15, 0.6);
@@ -947,8 +1038,14 @@ input::-webkit-inner-spin-button {
         margin-left: 0%;
         margin-right: 0%;
     }
+    #formulario {
+        width: 70%;
+    }
 }
 @media only screen and (max-width: 430px) {
+    #formulario {
+        width: 92%;
+    }
     .itemList {
         font-size: 0.8em;
     }

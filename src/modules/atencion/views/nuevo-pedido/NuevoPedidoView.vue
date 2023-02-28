@@ -424,8 +424,8 @@ export default {
     padding: 0px;
 }
 .v-list-item--density-default:not(.v-list-item--nav).v-list-item--one-line {
-    padding-inline-start: 8px;
-    padding-inline-end: 8px;
+    padding-inline-start: 16px;
+    padding-inline-end: 16px;
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -507,6 +507,10 @@ input::-webkit-inner-spin-button {
     .texto-cantidad {
         font-size: 0.9em;
     }
+    .v-list-item--density-default:not(.v-list-item--nav).v-list-item--one-line {
+        padding-inline-start: 7px;
+        padding-inline-end: 7px;
+    }
 }
 @media only screen and (max-width: 430px) {
     .item-list {
@@ -531,6 +535,10 @@ input::-webkit-inner-spin-button {
     }
     .panel-active-menu-global {
         width: 97%;
+    }
+    .v-list-item--density-default:not(.v-list-item--nav).v-list-item--one-line {
+        padding-inline-start: 7px;
+        padding-inline-end: 7px;
     }
 }
 </style>
