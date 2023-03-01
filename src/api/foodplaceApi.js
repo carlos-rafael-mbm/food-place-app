@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const foodplaceApi = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api'
-    // baseURL: 'https://carlosrmendoza.pythonanywhere.com/api'
+    // baseURL: 'http://127.0.0.1:5000/api'
+    baseURL: 'https://carlosrmendoza.pythonanywhere.com/api'
 })
 
 foodplaceApi.interceptors.request.use((config) => {
