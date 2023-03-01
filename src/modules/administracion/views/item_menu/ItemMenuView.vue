@@ -147,9 +147,7 @@
                                                     <v-text-field
                                                         label="Costo"
                                                         prefix="S/"
-                                                        :rules="[rules.required]"
                                                         v-model="item_menu.cost"
-                                                        required
                                                         type="number">
                                                     </v-text-field>
                                                 </div>
@@ -309,7 +307,7 @@ export default {
         },
         async guardarItemMenu() {
             this.$refs.form.validate()
-            if (!this.item_menu.category.id || !this.item_menu.name || !this.item_menu.cost) return
+            if (!this.item_menu.category.id || !this.item_menu.name) return
             new Swal({
                 title: 'Espere por favor',
                 allowOutsideClick: false
@@ -324,7 +322,7 @@ export default {
                 formData.append('name', this.item_menu.name)
                 formData.append('brief', this.item_menu.brief ? this.item_menu.brief : '')
                 formData.append('image', this.item_menu.image ? this.item_menu.image : '')
-                formData.append('cost', this.item_menu.cost)
+                formData.append('cost', this.item_menu.cost ? this.item_menu.cost : 0)
                 formData.append('state', this.item_menu.state ? 1 : 0)
                 formData.append('category_id', this.item_menu.category.id)
                 formData.append('preparation_area_id', this.item_menu.preparation_area.id)
@@ -334,7 +332,7 @@ export default {
                 formData.append('name', this.item_menu.name)
                 formData.append('brief', this.item_menu.brief ? this.item_menu.brief : '')
                 formData.append('image', this.item_menu.image ? this.item_menu.image : '')
-                formData.append('cost', this.item_menu.cost)
+                formData.append('cost', this.item_menu.cost ? this.item_menu.cost : 0)
                 formData.append('state', this.item_menu.state ? 1 : 0)
                 formData.append('category_id', this.item_menu.category.id)
                 formData.append('preparation_area_id', this.item_menu.preparation_area.id)
