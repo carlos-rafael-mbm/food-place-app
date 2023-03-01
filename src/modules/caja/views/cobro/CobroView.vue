@@ -32,8 +32,7 @@
                             item-title="number"
                             label="Seleccione una mesa"
                             variant="solo"
-                            bg-color="#E3CD83"
-                            :change="cargarPedidos()">
+                            bg-color="#E3CD83">
                         </v-combobox>
                     </div>
                 </div>
@@ -323,6 +322,12 @@ export default {
             }
         }
     },
+    watch: {
+        table(newValue, oldValue) {
+            if (newValue != oldValue)
+                this.cargarPedidos()
+        }
+    },
     computed: {
         ...mapState('pedido', ['orders', 'orders_all', 'order_details']),
         ...mapState('promocion', ['promotions']),
@@ -366,6 +371,11 @@ export default {
         },
         async cargarPedidos() {
             if (this.table) {
+                this.listOrderIds = []
+                this.listOrderDetailsSelected = []
+                this.listOrderDetails = []
+                this.listOrderDetailsGroup = []
+                this.isPayment = false
                 await this.loadOrders()
             }
         },
@@ -422,6 +432,7 @@ export default {
             this.isPayment = true
             this.toEdit = false
             this.listOrderDetails = []
+            this.listOrderDetailsGroup = []
             for (const id of this.listOrderIds) {
                 await this.loadOrderDetails(id)
                 for (const item of this.order_details)
@@ -866,6 +877,12 @@ export default {
                 Swal.fire('Error', 'Error no se pudo realizar el pago. ' + res[1], 'error')
             }
             this.limpiar()
+            this.listOrderIds = []
+            this.listOrderDetailsSelected = []
+            this.listOrderDetails = []
+            this.listOrderDetailsGroup = []
+            this.isPayment = false
+            await this.loadOrders()
         },
         limpiar() {
             this.dialog = false
