@@ -24,7 +24,7 @@
             <div class="justify-content-center align-items-center mt-4" style="margin-bottom: -12px">
                 <div id="formulario" class="animate__animated animate__flipInY mx-auto">
                     <div class="justify-content-center align-items-center">
-                        <v-combobox
+                        <v-select
                             v-model="preparation_area"
                             :items="getActivePreparationAreas()"
                             item-value="id"
@@ -32,8 +32,9 @@
                             label="Seleccione un área de preparación"
                             variant="solo"
                             bg-color="#679a50"
+                            return-object
                             :change="cargarPedidos()">
-                        </v-combobox>
+                        </v-select>
                     </div>
                 </div>
             </div>

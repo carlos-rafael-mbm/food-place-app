@@ -27,27 +27,29 @@
                             <div class="d-flex justify-content-center">
                                 <div style="width: 50%" class="left-control mt-5">
                                     <label for="txtCategoria" style="font-weight: bold">Categoría</label>
-                                    <v-combobox
+                                    <v-select
                                         v-model="supply.category_supply"
                                         :items="categories_supply"
                                         item-value="id"
                                         item-title="name"
                                         :rules="[rules.requiredSelection]"
                                         label="Seleccione"
+                                        return-object
                                         required>
-                                    </v-combobox>
+                                    </v-select>
                                 </div>
                                 <div style="width: 50%" class="right-control mt-5">
                                     <label for="txtUnidadMedida" style="font-weight: bold">Unid. Medida</label>
-                                    <v-combobox
+                                    <v-select
                                         v-model="supply.measurement_unit"
                                         :items="measurement_units"
                                         item-value="id"
                                         item-title="abbreviation"
                                         :rules="[rules.requiredSelection]"
                                         label="Seleccione"
+                                        return-object
                                         required>
-                                    </v-combobox>
+                                    </v-select>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-center">

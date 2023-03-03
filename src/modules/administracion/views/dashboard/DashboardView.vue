@@ -60,7 +60,7 @@
                                         text="Ranking de platos"
                                         class="text-center animate__animated animate__flipInY">
                                     </v-card>
-                                    <v-combobox
+                                    <v-select
                                         density="compact"
                                         hide-details="auto"
                                         style="font-size: small;"
@@ -68,8 +68,9 @@
                                         :items="meses"
                                         item-value="id"
                                         item-title="name"
-                                        label="Seleccione el mes">
-                                    </v-combobox>
+                                        label="Seleccione el mes"
+                                        return-object>
+                                    </v-select>
                                     <v-btn icon="mdi-chart-donut" class="mt-1 mx-5" size="small" rounded color="#679A50"></v-btn>
                                 </div>
                                 <div class="justify-content-center align-items-center">
@@ -87,7 +88,7 @@
                                             text="Productividad por empleado"
                                             class="text-center animate__animated animate__flipInY">
                                         </v-card>
-                                        <v-combobox
+                                        <v-select
                                             density="compact"
                                             hide-details="auto"
                                             style="font-size: small;"
@@ -95,8 +96,9 @@
                                             :items="meses"
                                             item-value="id"
                                             item-title="name"
-                                            label="Seleccione el mes">
-                                        </v-combobox>
+                                            label="Seleccione el mes"
+                                            return-object>
+                                        </v-select>
                                         <v-btn icon="mdi-chart-bar" class="mt-1 mx-5" size="small" rounded color="#679A50"></v-btn>
                                     </div>
                                 </div>
@@ -343,7 +345,7 @@ export default {
         width: 98%;
     }
     #formulario {
-        width: 50%;
+        width: 70%;
     }
     #tablaPreparacionArea {
         width: 100%;
