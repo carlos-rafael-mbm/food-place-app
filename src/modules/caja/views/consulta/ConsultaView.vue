@@ -23,9 +23,10 @@
                 </div>
                 <div class="row justify-content-center mb-4">
                     <div id="seleccion-caja" class="animate__animated animate__flipInY">
-                        <div class="control-seleccion-caja justify-content-center mt-5">
+                        <div class="control-seleccion-caja justify-content-center my-3">
                             <div class="middle-control-seleccion-caja">
-                                <v-combobox
+                                <v-select
+                                    v-if="getUser.role.id == 1 || getUser.role.id == 9"
                                     v-model="cashRegister"
                                     :items="cash_registers"
                                     item-value="id"
@@ -33,8 +34,10 @@
                                     hide-details="auto"
                                     :rules="[rules.requiredSelection]"
                                     required
+                                    class="mt-2"
+                                    return-object
                                     label="Seleccione caja">
-                                </v-combobox>
+                                </v-select>
                                 <v-btn class="my-3" rounded color="#679A50" @click="cargarResumenDia()">Resumen del día</v-btn>
                             </div>
                         </div>
@@ -180,7 +183,7 @@
                 <div id="tablaCierreDia" class="animate__animated animate__flipInY">
                     <easy-data-table
                         :headers="headers"
-                        :items="getCashierBalancingsConsultedInOrder()"
+                        :items="getCashierBalancings"
                         :theme-color="themeColor"
                         :rows-per-page="10"
                         table-class-name="customize-table"
@@ -238,6 +241,7 @@ export default {
         ...mapState('caja_registradora', ['cash_registers']),
         ...mapState('movimiento_caja', ['cash_register_movements']),
         ...mapGetters('balance_caja', ['getCashierBalancingsConsultedInOrder', 'isLoading']),
+        ...mapGetters('login', ['getUser']),
         getDiferencia() {
             const saldoInicial = parseFloat(this.saldoInicial ? this.saldoInicial : 0)
             const ingresos = parseFloat(this.ingresosCaja ? this.ingresosCaja : 0)
@@ -248,13 +252,20 @@ export default {
             const sumaSistema = saldoInicial + ingresos + ventasDia - egresos
             const sumaManual = efectivoDia + efectivoDigitalDia
             return roundNumber(sumaManual - sumaSistema)
+        },
+        getCashierBalancings() {
+            if (this.getUser.role.id == 1 || this.getUser.role.id == 9) {
+                return this.getCashierBalancingsConsultedInOrder()
+            } else {
+                return this.getCashierBalancingsConsultedInOrder().filter(item => item.cash_register_assignment.employee.id == this.getUser.employee.id)
+            }
         }
     },
     methods: {
         ...mapActions('caja_registradora', ['loadCashRegisters']),
-        ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByCashRegister', 'updateCashRegisterAssignment']),
+        ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByCashRegister', 'loadLastCashRegisterAssignmentByEmployee']),
         ...mapActions('movimiento_caja', ['loadCashRegisterMovements']),
-        ...mapActions('balance_caja', ['loadCashierBalancingsToday', 'createCashierBalancing', 'updateCashierBalancing']),
+        ...mapActions('balance_caja', ['loadCashierBalancingsToday', 'createCashierBalancing']),
         ...mapActions('pedido', ['loadOrdersByAssigment']),
         async limpiarCampos() {
             this.saldoInicial = 0
@@ -275,11 +286,20 @@ export default {
             }, 200);
         },
         async cargarResumenDia() {
-            this.cashierBalancing.cash_register_assignment = await this.loadLastCashRegisterAssignmentByCashRegister(this.cashRegister.id)
-            if (!this.cashierBalancing.cash_register_assignment) {
-                this.limpiarCampos()
-                Swal.fire('Error', 'No se realizó la apertura para esta caja registradora', 'error')
-                return
+            if (this.getUser.role.id == 1 || this.getUser.role.id == 9) {
+                this.cashierBalancing.cash_register_assignment = await this.loadLastCashRegisterAssignmentByCashRegister(this.cashRegister.id)
+                if (!this.cashierBalancing.cash_register_assignment) {
+                    this.limpiarCampos()
+                    Swal.fire('Error', 'No se realizó la apertura para esta caja registradora', 'error')
+                    return
+                }
+            } else {
+                this.cashierBalancing.cash_register_assignment = await this.loadLastCashRegisterAssignmentByEmployee(this.getUser.employee.id)
+                if (!this.cashierBalancing.cash_register_assignment) {
+                    this.limpiarCampos()
+                    Swal.fire('Error', 'No está asignado a ninguna caja registradora', 'error')
+                    return
+                }
             }
             // Cargar movimientos de entrada y salida
             await this.loadCashRegisterMovements(this.cashierBalancing.cash_register_assignment.id)
@@ -303,6 +323,10 @@ export default {
                 allowOutsideClick: false
             })
             Swal.showLoading()
+            if (this.efectivo < 0 || this.efectivoDigital < 0) {
+                Swal.fire('Error', 'El efectivo que ingresa no puede ser negativo', 'error')
+                return
+            }
             const saldoInicial = parseFloat(this.saldoInicial ? this.saldoInicial : 0)
             const ingresos = parseFloat(this.ingresosCaja ? this.ingresosCaja : 0)
             const egresos = parseFloat(this.egresosCaja ? this.egresosCaja : 0)
@@ -327,10 +351,12 @@ export default {
     },
     async mounted() {
         await this.loadCashierBalancingsToday()
-        await this.loadCashRegisters()
+        if (this.getUser.role.id == 1 || this.getUser.role.id == 9)
+            await this.loadCashRegisters()
         this.headers = [
             { text: "Caja", value: "cash_register_assignment.cash_register.name", sortable: true, width: 35 },
             { text: "Empleado", value: "cash_register_assignment.employee.name", sortable: true, width: 120 },
+            { text: "Fecha/Hora", value: "end_datetime", sortable: true, width: 130 },
             { text: "Saldo inicial", value: "cash_register_assignment.initial_balance", width: 75 },
             { text: "Ingresos", value: "total_inflow", width: 75 },
             { text: "Egresos", value: "total_outflow", width: 75 },

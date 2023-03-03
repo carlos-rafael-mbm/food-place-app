@@ -73,28 +73,30 @@
                                         <v-expansion-panel-text>
                                             <div class="panelFormBase justify-content-center">
                                                 <div class="panelForm" style="width: 100%">
-                                                    <v-combobox
+                                                    <v-select
                                                         v-model="item_menu.preparation_area"
                                                         :items="getActivePreparationAreas()"
                                                         item-value="id"
                                                         item-title="name"
                                                         :rules="[rules.requiredSelection]"
                                                         label="Seleccione un área de preparación"
-                                                        required>
-                                                    </v-combobox>
+                                                        required
+                                                        return-object>
+                                                    </v-select>
                                                 </div>
                                             </div>
                                             <div class="panelFormBase justify-content-center">
                                                 <div class="panelForm">
-                                                    <v-combobox
+                                                    <v-select
                                                         v-model="item_menu.category"
                                                         :items="categories"
                                                         item-value="id"
                                                         item-title="name"
                                                         :rules="[rules.requiredSelection]"
                                                         label="Seleccione una categoría"
-                                                        required>
-                                                    </v-combobox>
+                                                        required
+                                                        return-object>
+                                                    </v-select>
                                                 </div>
                                                 <div class="panelForm">
                                                     <v-text-field

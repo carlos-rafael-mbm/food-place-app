@@ -37,7 +37,7 @@
                                 </div>
                                 <div style="width: 50%" class="right-control mt-5">
                                     <label for="txtAlmacenes" style="font-weight: bold">Almacén</label>
-                                    <v-combobox
+                                    <v-select
                                         v-model="kardex.branch"
                                         :items="getActiveBranches()"
                                         item-value="id"
@@ -46,8 +46,9 @@
                                         label="Seleccione"
                                         single-line
                                         required
+                                        return-object
                                         :change="cargarInsumos()">
-                                    </v-combobox>
+                                    </v-select>
                                 </div>
                             </div>
                         </div>

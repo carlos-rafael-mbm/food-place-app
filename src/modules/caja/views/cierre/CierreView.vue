@@ -318,6 +318,10 @@ export default {
                 allowOutsideClick: false
             })
             Swal.showLoading()
+            if (this.efectivo < 0 || this.efectivoDigital < 0) {
+                Swal.fire('Error', 'El efectivo que ingresa no puede ser negativo', 'error')
+                return
+            }
             const saldoInicial = parseFloat(this.saldoInicial ? this.saldoInicial : 0)
             const ingresos = parseFloat(this.ingresosCaja ? this.ingresosCaja : 0)
             const egresos = parseFloat(this.egresosCaja ? this.egresosCaja : 0)

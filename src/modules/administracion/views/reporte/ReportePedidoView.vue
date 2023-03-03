@@ -35,7 +35,7 @@
                                     </v-text-field>
                                 </div>
                                 <div class="right-control size-right-control">
-                                    <v-btn prepend-icon="mdi-card-search" class="mx-4" rounded color="#679A50">
+                                    <v-btn prepend-icon="mdi-card-search" class="mx-4" rounded color="#679A50" @click="changeYear()">
                                         Cambiar año
                                     </v-btn>
                                 </div>
@@ -195,6 +195,11 @@ export default {
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
             return date.toJSON().slice(0, 10)
         },
+        getFecha(fecha) {
+            const date = new Date(fecha)
+            date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+            return date.toJSON().slice(0, 10)
+        },
         getOrdersDetailGroupByItem() {
             const res = this.order_details.reduce((accumulator, object) => {
                 let idx = accumulator[0].indexOf(object.menu_detail.item_menu.id)
@@ -344,6 +349,24 @@ export default {
         limpiar() {
             this.dialog = false
             this.clearOrderDetails()
+        },
+        async changeYear() {
+            if (this.year != new Date(Date.now()).getFullYear()) {
+                this.start_date = this.getFecha(new Date(this.year, 11, 1))
+                this.end_date = this.getFecha(new Date(this.year, 11, 31))
+            } else {
+                this.start_date = this.getFechaActual()
+                this.end_date = this.getFechaActual()
+            }
+            this.arrayOrdersReport = await this.loadOrdersReport(this.year)
+            this.arrayOrdersReportFiltered = [...this.arrayOrdersReport.filter(x => {
+                const startDate = new Date(Date.parse(this.start_date))
+                const endDate = new Date(Date.parse(this.end_date))
+                const orderDate = new Date(Date.parse(x.order_time))
+                if (orderDate >= startDate && orderDate <= endDate.setDate(endDate.getDate() + 1))
+                    return true
+                else return false
+            })]
         }
     },
     async mounted() {

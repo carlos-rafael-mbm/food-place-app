@@ -26,26 +26,28 @@
                         <div id="formulario" class="animate__animated animate__flipInY">
                             <div class="control-form justify-content-center mt-5">
                                 <div class="left-control">
-                                    <v-combobox
+                                    <v-select
                                         v-model="parameterBase"
                                         :items="parametersBase"
                                         item-value="parameter_code"
                                         item-title="parameter_desc"
                                         :rules="[rules.requiredSelection]"
                                         required
-                                        label="Seleccione parámetro">
-                                    </v-combobox>
+                                        label="Seleccione parámetro"
+                                        return-object>
+                                    </v-select>
                                 </div>
                                 <div class="right-control text-center">
-                                    <v-combobox
+                                    <v-select
                                         v-model="parameterItem"
                                         :items="getParameterItems"
                                         item-value="item_code"
                                         item-title="item_desc"
                                         :rules="[rules.requiredSelection]"
                                         required
-                                        label="Seleccione ítem">
-                                    </v-combobox>
+                                        label="Seleccione ítem"
+                                        return-object>
+                                    </v-select>
                                 </div>
                             </div>
                             <div class="control-form justify-content-center">

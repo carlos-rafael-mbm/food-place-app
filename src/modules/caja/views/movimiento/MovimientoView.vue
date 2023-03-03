@@ -26,13 +26,13 @@
                         <div id="formulario" class="animate__animated animate__flipInY">
                             <div class="control-form justify-content-center mt-5">
                                 <div class="left-control">
-                                    <v-combobox
+                                    <v-select
                                         v-model="cashRegisterMovement.movement_type"
                                         :items="['Entrada', 'Salida']"
                                         :rules="[rules.requiredSelection]"
                                         required
                                         label="Seleccione movimiento">
-                                    </v-combobox>
+                                    </v-select>
                                 </div>
                                 <div class="right-control text-center">
                                     <v-text-field
@@ -155,13 +155,17 @@ export default {
         },
         async guardarMovimiento() {
             this.$refs.form.validate()
-            if (this.cashRegisterMovement.amount == 0 || !this.cashRegisterMovement.reason || !this.cashRegisterMovement.movement_type) return
+            if (!this.cashRegisterMovement.reason || !this.cashRegisterMovement.movement_type) return
             new Swal({
                 title: 'Espere por favor',
                 allowOutsideClick: false
             })
             if (!this.cashRegisterMovement.cash_register_assignment) {
                 Swal.fire('Error', 'No tiene asignado una caja registradora para realizar esta operación', 'error')
+                return
+            }
+            if (this.cashRegisterMovement.amount < 0) {
+                Swal.fire('Error', 'El monto no puede ser negativo', 'error')
                 return
             }
             Swal.showLoading()

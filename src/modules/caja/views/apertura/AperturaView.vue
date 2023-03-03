@@ -54,9 +54,7 @@
                                         label="Ingrese saldo inicial"
                                         hide-details="auto"
                                         type="number"
-                                        :rules="[rules.required]"
-                                        v-model="cashRegisterAssignment.initial_balance"
-                                        required>
+                                        v-model="cashRegisterAssignment.initial_balance">
                                     </v-text-field>
                                 </div>
                             </div>
@@ -153,13 +151,17 @@ export default {
         },
         async iniciarCaja() {
             this.$refs.form.validate()
-            if (this.cashRegisterAssignment.initial_balance == 0 || !this.cashRegisterAssignment.cash_register || !this.cashRegisterAssignment.employee) return
+            if (!this.cashRegisterAssignment.cash_register || !this.cashRegisterAssignment.employee) return
             if (this.cash_register_assignments.some(asignacion => asignacion.state == 0 && asignacion.cash_register.id == this.cashRegisterAssignment.cash_register.id)) {
                 Swal.fire('Error', `Ya se inició el día en ${this.cashRegisterAssignment.cash_register.name}`, 'error')
                 return
             }
             if (this.cash_register_assignments.some(asignacion => asignacion.state == 0 && asignacion.employee.id == this.cashRegisterAssignment.employee.id)) {
                 Swal.fire('Error', `El empleado ${this.cashRegisterAssignment.employee.fullName} ya está asignado a una caja registradora`, 'error')
+                return
+            }
+            if (this.cashRegisterAssignment.initial_balance < 0) {
+                Swal.fire('Error', 'El saldo inicial no puede ser negativo', 'error')
                 return
             }
             new Swal({
