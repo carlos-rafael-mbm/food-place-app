@@ -90,13 +90,13 @@ export default {
 #bgAuth {
     height: 100vh;
     display: block;
-    background: url('@/assets/login.png');
+    background: url('@/assets/login.jpg');
     background-size: cover;
 }
 .formulario {
     width: 100%;
-    margin-left: 36%;
-    margin-right: 36%;
+    margin-left: 12%; // 36%
+    margin-right: 60%; // 36%
 }
 .card {
     background-color: rgba(90, 200, 85, 0.6);
@@ -108,6 +108,13 @@ export default {
     }
 }
 @media (max-width: 650px) {
+    #bgAuth {
+        height: 100vh;
+        display: block;
+        background: url('@/assets/login.jpg');
+        background-position: 70% 18%; /* Center the image */
+        background-repeat: no-repeat; /* Do not repeat the image */
+    }
     .formulario {
         margin-left: 10%;
         margin-right: 10%;

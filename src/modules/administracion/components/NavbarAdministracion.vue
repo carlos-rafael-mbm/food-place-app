@@ -1,7 +1,7 @@
 <template>
     <nav class="navbar">
         <a class="navbar-brand">
-            <img src="@/assets/logo.jpg" alt="La Esencia" height="30" class="d-inline-block align-text-top mx-2">
+            <img src="@/assets/logo.png" alt="La Esencia" height="30" class="d-inline-block align-text-top mx-2">
             La Esencia - Módulo de Administración
         </a>
         <div class="d-flex">

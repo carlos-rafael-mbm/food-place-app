@@ -485,7 +485,7 @@ export default {
                 pdf.setFont('DroidSans', 'bold')
                 pdf.setFontSize(13)
                 pdf.text(this.razonSocial, 70, 22)
-                const image = require('@/assets/logo.jpg')
+                const image = require('@/assets/logo.png')
                 pdf.addImage(image, "PNG", 25, 15, 24, 24);
                 pdf.setFont('DroidSans', 'bold')
                 pdf.setFontSize(7)
