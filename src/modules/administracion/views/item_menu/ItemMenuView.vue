@@ -29,7 +29,7 @@
                 class="mx-auto my-3 border-0 animate__animated animate__flipInY"
                 max-width="50%"
                 variant="outlined">
-                <img class="img mx-2 my-2" alt="Empresa" src="@/assets/logo.jpg">
+                <img class="img mx-2 my-2" alt="Empresa" src="@/assets/logo.png">
             </v-card>
         </div>
         <div class="text-center d-flex justify-content-center" style="width:100%">

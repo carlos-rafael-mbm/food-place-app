@@ -5,8 +5,8 @@
         <v-layout>
             <v-app-bar color="#E75D48" :elevation="10">
                 <v-app-bar-nav-icon @click="drawer = !drawer" class="icon"></v-app-bar-nav-icon>
-                <v-avatar size="small" class="imagen">
-                    <img src="@/assets/logo.jpg" alt="" height="50">
+                <v-avatar rounded="0" class="imagen">
+                    <img src="@/assets/logo.png" alt="" height="45">
                 </v-avatar>
                 <v-card class="texto" flat>Módulo de Almacén</v-card>
                 <v-spacer></v-spacer>

@@ -257,7 +257,7 @@ export default {
                 pdf.setFont('DroidSans', 'bold')
                 pdf.setFontSize(13)
                 pdf.text("Alojería La Esencia", 90, 20)
-                const image = require('@/assets/logo.jpg')
+                const image = require('@/assets/logo.png')
                 pdf.addImage(image, "PNG", 18, 15, 18, 18);
                 pdf.setFont('DroidSans', 'bold')
                 pdf.setFontSize(7)
