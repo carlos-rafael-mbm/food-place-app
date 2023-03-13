@@ -2,7 +2,8 @@
     <div id="bgAuth">
         <div class="d-flex vh-100 justify-content-center align-items-center">
             <div class="text-center formulario">
-                <v-card class="card pa-7">
+                <img alt="Empresa" src="@/assets/logo.png" height="120" style="border: 1px solid white;">
+                <v-card class="card pa-7 mt-5">
                     <v-form
                         v-model="form"
                         @submit.prevent="onSubmit">

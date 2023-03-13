@@ -3,8 +3,8 @@
     <div class="position-absolute top-0 end-0">
       <v-btn icon="mdi-logout" class="mx-2 my-2" color="#F1C40F" rounded @click="logout()"></v-btn>
     </div>
-    <div id="esencia-principal" class="vh-100 row justify-content-center align-items-center">
-      <div class="col-12 text-center">
+    <div id="esencia-principal" class="vh-100 justify-content-center align-items-center">
+      <div class="col-12 text-center mt-13">
         <img alt="Empresa" src="../assets/logo.png" height="200">
         <h1 class="text-light my-3 titulo">Bienvenidos al sistema de {{ getRazonSocial }}</h1>
         <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 6)" prepend-icon="mdi-account-tie-hat" class="boton" rounded color="#F1C40F" size="large" @click="ir_Administracion">Administración</v-btn>
@@ -13,7 +13,7 @@
         <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 4)" prepend-icon="mdi-cash-register" class="boton" rounded color="#E3CD83" size="large" @click="ir_Caja">Caja</v-btn>
         <v-btn v-if="user.role && (user.role.id == 1 || user.role.id == 9 || user.role.id == 5 || user.role.id == 13)" prepend-icon="mdi-store-cog" class="boton" rounded color="#E75D48" size="large" @click="ir_Almacen">Almacén</v-btn>
       </div>
-      <div class="texto text-center">
+      <div class="mx-auto my-12 texto text-center">
         <v-expansion-panels>
           <v-expansion-panel>
             <v-expansion-panel-title class="text-center panel-title">
@@ -27,6 +27,10 @@
               <br>
               Además, cuenta con un sistema de control de usuarios y roles, que le da seguridad al sistema, evitando que usuarios no autenticados tengan acceso a información privada del negocio, así mismo,
               que usuarios sin el permiso necesario accedan a información que no corresponda a sus funciones.
+              <br>
+              --
+              <br>
+              Este software es propiedad de Gnosyst Group. Para más información, comuníquese al: 952441897 - 967761744
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -121,7 +125,7 @@ h1 {
   text-align: justify;
 }
 .titulo {
-  margin: 0px 250px;
+  margin: 0px 15rem;
 }
 /* Estilos para motores Webkit y blink (Chrome, Safari, Opera... )*/
 #esencia-principal::-webkit-scrollbar {
