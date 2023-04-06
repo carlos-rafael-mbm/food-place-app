@@ -84,6 +84,15 @@
                         @click="this.$router.push({name: 'adm-table-view'})"></v-list-item>
                     <v-list-item
                         v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
+                        prepend-icon="mdi-currency-usd"
+                        title="Métodos de pago"
+                        value="metodos-pago"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-payment-method-view'})"></v-list-item>
+                    <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-cash-register"
                         title="Cajas registradoras"
                         value="caja_registradora"

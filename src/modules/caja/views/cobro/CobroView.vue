@@ -181,6 +181,35 @@
                             </div>
                         </div>
                         <div v-if="generaDoc" style="width: 100%">
+                            <div class="d-flex justify-content-center align-items-center mt-2">
+                                <div class="mx-auto text-center metodo-pago">
+                                    <v-select
+                                        v-model="payment_method"
+                                        :items="getActivePaymentMethods()"
+                                        hide-details="true"
+                                        density="compact"
+                                        item-value="id"
+                                        item-title="method"
+                                        :rules="[rules.requiredSelection]"
+                                        label="Seleccione método de pago"
+                                        required
+                                        return-object>
+                                        <!-- <template v-slot:prepend>
+                                            <v-avatar>
+                                                <v-img
+                                                    alt="payment-avatar"
+                                                    :src="item.image"></v-img>
+                                            </v-avatar>
+                                        </template> -->
+                                        <!-- <template v-slot:item="{item}">
+                                            <v-list-item
+                                                :prepend-avatar="item.raw.image"
+                                                :title="item.raw.method"
+                                            />
+                                        </template> -->
+                                    </v-select>
+                                </div>
+                            </div>
                             <div class="row justify-content-center align-items-center mt-1" style="width: 100%">
                                 <div class="col-auto text-center comprobante">
                                     <v-radio-group v-model="tipoDoc" inline style="margin-bottom: -15px" @click="docCliente = ''; nombreCliente = ''">
@@ -308,6 +337,8 @@ export default {
             generaDoc: false,
             docCliente: '',
             nombreCliente: '',
+            nombresCliente: '',
+            apellidosCliente: '',
             correlativo: '',
             habilitarSunat: false,
             montoIgv: 0,
@@ -319,7 +350,8 @@ export default {
                 initial_balance: 0,
                 cash_register: null,
                 employee: null
-            }
+            },
+            payment_method: null
         }
     },
     watch: {
@@ -332,8 +364,10 @@ export default {
         ...mapState('pedido', ['orders', 'orders_all', 'order_details']),
         ...mapState('promocion', ['promotions']),
         ...mapState('parametro', ['parameters']),
+        ...mapState('metodo_pago', ['payment_methods']),
         ...mapGetters('mesa', ['getActiveTables']),
         ...mapGetters('login', ['getUser']),
+        ...mapGetters('metodo_pago', ['getActivePaymentMethods']),
         getOrdersByTable: function() {
             return this.orders.filter(ord => ord.table.id == this.table.id)
         },
@@ -360,6 +394,9 @@ export default {
         ...mapActions('parametro', ['loadParameters']),
         ...mapActions('mesa', ['loadTables']),
         ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByEmployee']),
+        ...mapActions('metodo_pago', ['loadPaymentMethods']),
+        ...mapActions('comprobante', ['createVoucher', 'createVoucherDetail']),
+        ...mapActions('cliente', ['createClient']),
         getWidthScreen() {
             if (window.innerWidth >= 800) {
                 this.widthScreen = 4
@@ -464,6 +501,8 @@ export default {
                         if (rpta && rpta.data) {
                             if (rpta.data.nombres && rpta.data.apellidoPaterno) {
                                 this.nombreCliente = rpta.data.nombres + ' ' + rpta.data.apellidoPaterno + ' ' + rpta.data.apellidoMaterno
+                                this.nombresCliente = rpta.data.nombres
+                                this.apellidosCliente = rpta.data.apellidoPaterno + ' ' + rpta.data.apellidoMaterno
                             } else {
                                 await Swal.fire({
                                     position: 'top-end',
@@ -827,16 +866,25 @@ export default {
             }
         },
         async pagarPedido() {
+            // 1. Guardar datos de cliente
+            const formCliente = new FormData()
+            formCliente.append('doc_type', this.docCliente.length == 8 ? '1' : '2')
+            formCliente.append('doc_number', this.docCliente)
+            formCliente.append('recurrent', 0)
+            console.log(this.docCliente)
+            if (this.docCliente.length == 8) {
+                formCliente.append('name', this.nombresCliente)
+                formCliente.append('surname', this.apellidosCliente)
+                console.log(this.nombresCliente)
+            } else {
+                formCliente.append('business_name', this.nombreCliente)
+                console.log(this.nombreCliente)
+            }
+            await this.createClient(formCliente)
+            // 2. Actualizar estado de pedidos y asignación de personal que cobra
             let res = []
             const formData = new FormData()
             formData.append('state', 5)
-            if (this.toEdit && this.promotion.id != 0) {
-                formData.append('promotion_id', this.promotion.id)
-            }
-            if (this.correlativo.length > 0) {
-                formData.append('serie', this.tipoDoc <= 2 ? 'B001' : 'F001')
-                formData.append('correlative', this.correlativo)
-            }
             formData.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
             for (const id of this.listOrderIds) {
                 res = await this.updateOrder([id, formData])
@@ -857,25 +905,52 @@ export default {
                 }
             }
             if (res[0] != 0) {
-                if (this.toEdit) {
-                    let hasError = false
-                    console.log(this.listOrderDetailsSelected)
-                    for (const item of this.listOrderDetailsSelected) {
-                        const formDetalle = new FormData()
-                        formDetalle.append('price', item.price)
-                        const resDetalle = await this.updateOrderDetail([item.id, formDetalle])
-                        if (resDetalle[0] == 0) {
-                            hasError = true
-                        }
-                    }
-                    if (hasError) {
-                        Swal.fire('Error', 'El pago se realizó con errores en los precios', 'error')
-                    }
+                // 3. Agregar registros a Voucher y Voucher_Detail
+                const formVoucher = new FormData()
+                formVoucher.append('doc_type', this.tipoDoc <= 2 ? '03' : '01')
+                if (this.correlativo.length > 0) {
+                    formVoucher.append('serie', this.tipoDoc <= 2 ? 'B001' : 'F001')
+                    formVoucher.append('correlative', this.correlativo)
                 }
-                Swal.fire('Cobro exitoso', 'Se realizó el pago correctamente', 'success')
+                formVoucher.append('tax_value', this.montoIgv)
+                formVoucher.append('total_no_tax', this.getTotalNoIGV)
+                formVoucher.append('tax_amount', this.getTotalNoIGV * this.montoIgv / 100)
+                formVoucher.append('total_tax', this.getTotal)
+                formVoucher.append('total_tax_text', readNumbersAsText(this.getTotal, {
+                    plural: "SOLES",
+                    singular: "SOL",
+                    centPlural: "CÉNTIMOS",
+                    centSingular: "CÉNTIMO"
+                }))
+                formVoucher.append('reference', '')
+                formVoucher.append('state', 1)
+                formVoucher.append('table_id', this.table.id)
+                formVoucher.append('payment_method_id', this.payment_method.id)
+                formVoucher.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
+                const resVoucher = await this.createVoucher(formVoucher)
+                if (resVoucher[0] != 0) {
+                    for (const item of this.listOrderDetailsGroup) {
+                        const formVoucherDetail = new FormData()
+                        formVoucherDetail.append('unit', 'NIU')
+                        formVoucherDetail.append('amount', item.amount.toFixed(2))
+                        // formVoucherDetail.append('sku', '')
+                        formVoucherDetail.append('category', item.menu_detail.item_menu.category.name)
+                        formVoucherDetail.append('item_menu', item.menu_detail.item_menu.name)
+                        formVoucherDetail.append('price_no_tax', ((item.price * 100) / (100 + this.montoIgv)).toFixed(2))
+                        formVoucherDetail.append('price_tax', item.price.toFixed(2))
+                        formVoucherDetail.append('subtotal', (item.amount * ((item.price * 100) / (100 + this.montoIgv))).toFixed(2))
+                        formVoucherDetail.append('total', (item.amount * item.price).toFixed(2))
+                        formVoucherDetail.append('voucher_id', resVoucher[0])
+                        await this.createVoucherDetail(formVoucherDetail)
+                    }
+                    Swal.fire('Cobro exitoso', 'Se realizó el pago correctamente', 'success')
+                } else {
+                    Swal.fire('Cobro exitoso', 'Se realizó el pago, pero no se guardó el voucher', 'success')
+                }
             } else {
                 Swal.fire('Error', 'Error no se pudo realizar el pago. ' + res[1], 'error')
             }
+            // 4. Limpiar datos
             this.limpiar()
             this.listOrderIds = []
             this.listOrderDetailsSelected = []
@@ -897,15 +972,18 @@ export default {
             this.promotion.discount = ''
             this.promotion.image = ''
             this.promotion.state = true
-            this.tipoDoc = 0,
-            this.generaDoc = false,
-            this.docCliente = '',
+            this.tipoDoc = 0
+            this.generaDoc = false
+            this.docCliente = ''
             this.nombreCliente = ''
+            this.nombresCliente = ''
+            this.apellidosCliente = ''
             this.correlativo = ''
         }
     },
     async mounted() {
         window.addEventListener("resize", this.getWidthScreen)
+        await this.loadPaymentMethods()
         await this.loadParameters()
         let parameterFound = this.parameters.find(p => p.parameter_code == 1000 && p.item_code == 1002)
         this.razonSocial = parameterFound ? parameterFound.value : ''
@@ -1004,6 +1082,9 @@ export default {
 .sin-comprobante {
     width: 40%;
 }
+.metodo-pago {
+    width: 40%;
+}
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -1085,6 +1166,9 @@ input::-webkit-inner-spin-button {
     .sin-comprobante {
         width: 80%;
         font-size: 0.8em;
+    }
+    .metodo-pago {
+        width: 90%;
     }
 }
 </style>
