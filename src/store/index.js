@@ -19,6 +19,8 @@ import caja_registradora from "@/store/local/caja_registradora"
 import asignacion_cajero from "@/store/caja/asignacion_cajero"
 import movimiento_caja from "@/store/caja/movimiento"
 import balance_caja from "@/store/caja/balance"
+import metodo_pago from "@/store/local/metodo_pago"
+import comprobante from "@/store/caja/voucher"
 
 const store = createStore({
     modules: {
@@ -41,7 +43,9 @@ const store = createStore({
         caja_registradora,
         asignacion_cajero,
         movimiento_caja,
-        balance_caja
+        balance_caja,
+        metodo_pago,
+        comprobante
     }
 })
 

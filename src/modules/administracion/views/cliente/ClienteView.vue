@@ -212,10 +212,12 @@ export default {
     },
     computed: {
         ...mapState('cliente', ['clients', 'isLoading']),
-        ...mapGetters('cliente', ['getClientById'])
+        ...mapGetters('cliente', ['getClientById']),
+        ...mapGetters('parametro', ['getParameterByParameterCode'])
     },
     methods: {
         ...mapActions('cliente', ['loadClients', 'createClient', 'updateClient', 'deleteClient']),
+        ...mapActions('parametro', ['loadParameters']),
         onSelectedImage(event) {
             const file = event.target.files[0]
             if (!file) {
