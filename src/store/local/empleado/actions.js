@@ -16,6 +16,22 @@ export const loadEmployees = async({commit}) => {
     }
 }
 
+export const loadCashiers = async({commit}) => {
+    commit('setLoading')
+    const cashiers = []
+    try {
+        const { data } = await foodplaceApi.get('/employees/cashiers')
+        for (const entry of Array.prototype.entries.call(data)) {
+            cashiers.push({...entry[1], orden: entry[0] + 1})
+        }
+        commit('setEmployees', cashiers)
+    } catch (error) {
+        commit('setEmployees', cashiers)
+    } finally {
+        commit('setLoading')
+    }
+}
+
 export const createEmployee = async ({commit}, form) => {
     try {
         const {data} = await foodplaceApi.post('/employees', form)
