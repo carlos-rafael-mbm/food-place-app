@@ -5,7 +5,7 @@ export const getParameterById = (state) => (id = '') => {
 }
 
 export const getParameterByParameterCode = (state) => (code = '') => {
-    const parameter = state.parameters.find(p => p.parameter_code === code)
-    if (!parameter) return
-    return {...parameter}
+    const parameters = state.parameters.filter(p => p.parameter_code === code)
+    if (!parameters) return
+    return parameters
 }
