@@ -173,6 +173,18 @@ export const loadOrderDetailsByVoucher = async({commit}, comprobante) => {
     }
 }
 
+export const revertOrder = async(_, voucher_id) => {
+    let response = {}
+    try {
+        const { data } = await foodplaceApi.get(`/orders/revert/${voucher_id}`)
+        response = data
+    } catch (error) {
+        response.rpta = 0
+        response.message = 'Error'
+    }
+    return response
+}
+
 export const createOrder = async ({commit}, form) => {
     try {
         const {data} = await foodplaceApi.post('/orders', form)

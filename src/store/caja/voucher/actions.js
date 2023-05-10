@@ -16,6 +16,15 @@ export const loadVouchersReport = async({commit}, year) => {
     }
 }
 
+export const loadVouchersById = async(_, id) => {
+    try {
+        const { data } = await foodplaceApi.get(`/vouchers/${id}`)
+        return data['comprobante-consultado']
+    } catch (error) {
+        return {}
+    }
+}
+
 export const loadVouchersByAssigment = async(_, assignment_id) => {
     const vouchers = []
     try {
@@ -29,6 +38,22 @@ export const loadVouchersByAssigment = async(_, assignment_id) => {
         return vouchers
     } catch (error) {
         return vouchers
+    }
+}
+
+export const loadAllVouchers = async({commit}) => {
+    const vouchers = []
+    try {
+        const { data } = await foodplaceApi.get('/vouchers')
+        for (const entry of Array.prototype.entries.call(data)) {
+            vouchers.push({...entry[1], orden: entry[0] + 1})
+        }
+        if (vouchers) {
+            vouchers.sort((a, b) => b.id - a.id)
+        }
+        commit('setAllVouchers', vouchers)
+    } catch (error) {
+        commit('setAllVouchers', vouchers)
     }
 }
 

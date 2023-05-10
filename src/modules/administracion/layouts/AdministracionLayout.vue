@@ -1,6 +1,6 @@
 <template>
     <v-card
-        class="mx-auto overflow-hidden"
+        class="mx-auto"
         height="100vh">
         <v-layout>
             <v-app-bar color="#F1C40F" :elevation="10">
@@ -117,6 +117,15 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-client-view'})"></v-list-item>
+                    <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
+                        prepend-icon="mdi-store"
+                        title="Mapa del local"
+                        value="place_map"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-place-map-view'})"></v-list-item>
                     <v-list-subheader color="white" v-if="user.role && (user.role.id == 1 || user.role.id == 9)">PERSONAL</v-list-subheader>
                     <v-list-item
                         v-if="user.role && (user.role.id == 1 || user.role.id == 9)"

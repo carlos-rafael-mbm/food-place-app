@@ -44,6 +44,15 @@ export const loadBranchWarehousesDetail = async({commit}, id) => {
     }
 }
 
+export const loadBranchWarehousesDetailOutput = async(_, id) => {
+    try {
+        const { data } = await foodplaceApi.get(`/branch_warehouses_detail/search-branch-warehouse/output/${id}`)
+        return data
+    } catch (error) {
+        return []
+    }
+}
+
 export const createBranch = async ({commit}, form) => {
     try {
         const {data} = await foodplaceApi.post('/branches', form)
@@ -101,6 +110,15 @@ export const updateBranchWarehouseDetail = async ({commit}, form) => {
         if (err.response) {
             return [0, err.response.data.message]
         }
+    }
+}
+
+export const updateSupplyControl = async(_, id) => {
+    try {
+        const { data } = await foodplaceApi.put(`/branch_warehouses_detail/search-branch-warehouse/output/${id}`)
+        return [1, data.message]
+    } catch (error) {
+        return [0, error.response.data.message]
     }
 }
 

@@ -45,6 +45,14 @@
                         density="compact"
                         class="bgBrown"
                         @click="$router.push({name: 'atencion-nuevo-view'})"></v-list-item>
+                    <v-list-item
+                        prepend-icon="mdi-store"
+                        title="Distribución de mesas"
+                        value="distribucion"
+                        active-class="bgBrownActive animate__animated animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgBrown"
+                        @click="$router.push({name: 'atencion-distribucion-view'})"></v-list-item>
                 </v-list>
             </v-navigation-drawer>
 

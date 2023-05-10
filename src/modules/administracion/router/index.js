@@ -71,6 +71,12 @@ export default {
             component: () => import(/* webpackChunkName: "administracion-client-view" */ '@/modules/administracion/views/cliente/ClienteView.vue')
         },
         {
+            path: '/administracion/mapa',
+            name: 'adm-place-map-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-place-map-view" */ '@/modules/administracion/views/mapa_local/MapaLocalView.vue')
+        },
+        {
             path: '/administracion/empleados',
             name: 'adm-employee-view',
             beforeEnter: [isAuthenticatedAdmin],

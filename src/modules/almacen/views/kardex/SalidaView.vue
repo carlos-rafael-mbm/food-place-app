@@ -13,7 +13,7 @@
         </div>
     </div>
     <div v-else id="stock-count">
-        <div class="text-center d-flex justify-content-center" style="width:100%; margin-bottom: 100px;">
+        <div class="text-center d-flex justify-content-center stock-count-panel" style="margin-bottom: 100px;">
             <div class="panel-count justify-content-center align-items-center">
                 <div class="my-3 d-flex align-center flex-column">
                     <v-card
@@ -61,17 +61,20 @@
                         max-width="1000" max-height="600">
                         <v-list class="lista">
                             <div class="d-flex">
-                                <div style="width: 58%; border-bottom: 1px solid; margin: 0 10px">
+                                <div style="width: 46%; border-bottom: 1px solid; margin: 0 10px">
                                     <h6>Insumos</h6>
                                 </div>
                                 <div style="width: 12%; border-bottom: 1px solid; margin: 0 10px">
-                                    <h6>Stock</h6>
+                                    <h6>Stock neto</h6>
+                                </div>
+                                <div style="width: 12%; border-bottom: 1px solid; margin: 0 10px">
+                                    <h6>Stock utilizado</h6>
                                 </div>
                                 <div style="width: 15%; border-bottom: 1px solid; margin: 0 10px">
                                     <h6><v-icon>mdi-counter</v-icon></h6>
                                 </div>
                                 <div style="width: 15%; border-bottom: 1px solid; margin: 0 10px">
-                                    <h6><v-icon>mdi-archive-arrow-up</v-icon></h6>
+                                    <h6>Stock real utilizado</h6>
                                 </div>
                             </div>
                             <v-list-item
@@ -81,25 +84,28 @@
                                 class="item-list">
                                 <template v-slot:default>
                                     <div class="d-flex justify-content-center align-items-center">
-                                        <div style="width: 58%">
+                                        <div style="width: 46%">
                                             <v-list-item-title class="titulo-menu text-left">
                                                 <v-icon color="red" size="small" v-if="item.stock <= 10">mdi-flag-variant</v-icon>
                                                 <v-icon color="yellow" size="small" v-if="item.stock > 10 && item.stock <=20">mdi-flag-variant</v-icon>
                                                 <v-icon color="#045799" size="small" v-if="item.stock > 20">mdi-flag-variant</v-icon>
-                                                {{ item.name }}
+                                                {{ item.supply_name }}
                                             </v-list-item-title>
                                             <v-list-item-subtitle class="subtitulo-menu text-left">
-                                                {{ item.category_supply.name }} ({{ item.measurement_unit.abbreviation }})
+                                                {{ item.category_supply_name }} ({{ item.measurement_unit_name }})
                                             </v-list-item-subtitle>
                                         </div>
                                         <div class="cantidad" style="width: 12%">
                                             {{item.stock}}
                                         </div>
+                                        <div class="cantidad" style="width: 12%">
+                                            {{item.amount_used}}
+                                        </div>
                                         <div style="width: 15%">
                                             <input type="number" v-model="item.stock_count" min="0" max="1000" class="cantidad cantidad-edit text-right">
                                         </div>
                                         <div style="width: 15%">
-                                            {{item.stock - item.stock_count}}
+                                            {{(item.stock - item.stock_count).toFixed(2)}}
                                         </div>
                                     </div>
                                 </template>
@@ -157,7 +163,7 @@ export default {
         ...mapGetters('login', ['getUser'])
     },
     methods: {
-        ...mapActions('almacen', ['loadBranches', 'loadBranchWarehousesDetail', 'updateBranchWarehouseDetail']),
+        ...mapActions('almacen', ['loadBranches', 'loadBranchWarehousesDetailOutput', 'updateBranchWarehouseDetail', 'updateSupplyControl']),
         ...mapActions('kardex', ['createKardex', 'createKardexDetail']),
         getFechaActual() {
             const date = new Date(Date.now())
@@ -166,17 +172,16 @@ export default {
         },
         async cargarInsumos() {
             if (this.kardex.branch) {
-                await this.loadBranchWarehousesDetail(this.kardex.branch.id)
-                this.suppliesToStockCount = this.getSuppliesToStockCount
+                this.suppliesToStockCount = await this.loadBranchWarehousesDetailOutput(this.kardex.branch.id)
                 this.showSupplies = true
             }
         },
-        nuevoKardex() {
+        async nuevoKardex() {
             this.kardex.id = 0
             this.kardex.date = new Date(Date.now()).toISOString().split('T')[0]
             this.kardex.movement_type = 'Salida'
             this.kardex.branch = null
-            this.suppliesToStockCount = this.getSuppliesToStockCount
+            this.suppliesToStockCount = await this.loadBranchWarehousesDetailOutput(this.kardex.branch.id)
             this.showSupplies = false
             setTimeout(() => {
                 this.$refs.form.resetValidation()
@@ -207,18 +212,17 @@ export default {
             if (res[0] != 0) {
                 for (const item of this.suppliesToStockCount) {
                     if (item.stock_count && item.stock != item.stock_count) {
-                        const branch_warehouse_det = await this.getDetailByBranch(this.kardex.branch.id, item.id)
                         const formDetalle = new FormData()
                         formDetalle.append('amount', item.stock - item.stock_count)
                         formDetalle.append('price', 0)
-                        formDetalle.append('branch_warehouse_detail_id', branch_warehouse_det.id)
+                        formDetalle.append('branch_warehouse_detail_id', item.id)
                         formDetalle.append('kardex_id', res[0])
                         const resDetalle = await this.createKardexDetail(formDetalle)
                         if (resDetalle[0] == 0) {
                             hasError = true
                             await Swal.fire({
                                 position: 'top-end',
-                                text: `El ítem ${item.name} no se agregó al kardex. ${resDetalle[1]}`,
+                                text: `El ítem ${item.supply_name} no se agregó al kardex. ${resDetalle[1]}`,
                                 color: 'white',
                                 background: '#D96E4C',
                                 timerProgressBar: true,
@@ -228,12 +232,12 @@ export default {
                         }
                         const formSupply = new FormData()
                         formSupply.append('stock', item.stock_count)
-                        const resSupply = await this.updateBranchWarehouseDetail([branch_warehouse_det.id, formSupply])
+                        const resSupply = await this.updateBranchWarehouseDetail([item.id, formSupply])
                         if (resSupply[0] == 0) {
                             hasError = true
                             await Swal.fire({
                                 position: 'top-end',
-                                text: `No se pudo actualizar el stock del ítem ${item.name}. ${resSupply[1]}`,
+                                text: `No se pudo actualizar el stock del ítem ${item.supply_name}. ${resSupply[1]}`,
                                 color: 'white',
                                 background: '#D96E4C',
                                 timerProgressBar: true,
@@ -242,6 +246,18 @@ export default {
                             })
                         }
                     }
+                }
+                const resSupplyControl = await this.updateSupplyControl(this.kardex.branch.id)
+                if (resSupplyControl[0] == 0) {
+                    await Swal.fire({
+                        position: 'top-end',
+                        text: 'Error al limpiar stock utilizado de los insumos',
+                        color: 'white',
+                        background: '#D96E4C',
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
                 }
                 if (hasError) {
                     Swal.fire('Error', 'El conteo se realizó con errores', 'error')
@@ -278,6 +294,9 @@ export default {
     overflow-y: auto;
     background: url('@/assets/Fondo-Alm.png');
     background-size: cover;
+}
+.stock-count-panel {
+    width: 100%;
 }
 .panel-count {
     width: 50%;
@@ -373,18 +392,22 @@ input::-webkit-inner-spin-button {
 .bgDialog::-webkit-scrollbar {
     -webkit-appearance: none;
 }
+@media (max-width: 1100px) {
+    .panel-count {
+        width: 80%;
+    }
+}
 @media (max-width: 650px) {
     /* For mobile phones: */
+    .stock-count-panel {
+        width: 650px;
+        overflow-x: scroll;
+    }
     .panel-count {
         width: 90%;
     }
     #formulario {
-        width: 98%;
-        margin-left: 0px;
-        margin-right: 0px;
-    }
-    #tablaInsumos {
-        width: 100%;
+        width: 70%;
         margin-left: 0px;
         margin-right: 0px;
     }
@@ -400,6 +423,9 @@ input::-webkit-inner-spin-button {
         margin-left: 0em;
         margin-right: 0em;
     }
+    // .table-list {
+    //     width: 500px;
+    // }
     .item-list {
         margin: 0% -10px;
     }

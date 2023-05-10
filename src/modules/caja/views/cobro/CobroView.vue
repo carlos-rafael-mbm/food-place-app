@@ -361,10 +361,11 @@ export default {
         }
     },
     computed: {
-        ...mapState('pedido', ['orders', 'orders_all', 'order_details']),
+        ...mapState('pedido', ['orders', 'order_details']),
         ...mapState('promocion', ['promotions']),
         ...mapState('parametro', ['parameters']),
         ...mapState('metodo_pago', ['payment_methods']),
+        ...mapState('comprobante', ['vouchers_all']),
         ...mapGetters('mesa', ['getActiveTables']),
         ...mapGetters('login', ['getUser']),
         ...mapGetters('metodo_pago', ['getActivePaymentMethods']),
@@ -389,14 +390,14 @@ export default {
         }
     },
     methods: {
-        ...mapActions('pedido', ['loadOrders', 'loadAllOrders', 'loadOrderDetails', 'clearOrderComplete', 'clearOrderDetails', 'updateOrder', 'updateOrderDetail', 'createAssignmentOrder']),
+        ...mapActions('pedido', ['loadOrders', 'loadOrderDetails', 'clearOrderComplete', 'clearOrderDetails', 'updateOrder', 'updateOrderDetail', 'createAssignmentOrder']),
         ...mapActions('promocion', ['loadActivePromotions']),
         ...mapActions('parametro', ['loadParameters']),
         ...mapActions('mesa', ['loadTables']),
         ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByEmployee']),
         ...mapActions('metodo_pago', ['loadPaymentMethods']),
-        ...mapActions('comprobante', ['createVoucher', 'createVoucherDetail']),
-        ...mapActions('cliente', ['createClient']),
+        ...mapActions('comprobante', ['loadAllVouchers', 'createVoucher', 'createVoucherDetail']),
+        ...mapActions('cliente', ['createClientByPayment']),
         getWidthScreen() {
             if (window.innerWidth >= 800) {
                 this.widthScreen = 4
@@ -428,8 +429,8 @@ export default {
         },
         async getMaxCorrelative(voucherType) {
             let maxValue = 0
-            await this.loadAllOrders()
-            const ordersWithVoucher = [...this.orders_all.filter(ord => ord.serie && ord.serie.startsWith(voucherType))]
+            await this.loadAllVouchers()
+            const ordersWithVoucher = [...this.vouchers_all.filter(v => v.serie && v.serie.startsWith(voucherType))]
             if (ordersWithVoucher && ordersWithVoucher.length > 0) {
                 maxValue = Math.max(...ordersWithVoucher.map(x => parseInt(x.correlative)))
                 maxValue++
@@ -871,84 +872,85 @@ export default {
             formCliente.append('doc_type', this.docCliente.length == 8 ? '1' : '2')
             formCliente.append('doc_number', this.docCliente)
             formCliente.append('recurrent', 0)
-            console.log(this.docCliente)
             if (this.docCliente.length == 8) {
                 formCliente.append('name', this.nombresCliente)
                 formCliente.append('surname', this.apellidosCliente)
-                console.log(this.nombresCliente)
             } else {
                 formCliente.append('business_name', this.nombreCliente)
-                console.log(this.nombreCliente)
             }
-            await this.createClient(formCliente)
-            // 2. Actualizar estado de pedidos y asignación de personal que cobra
-            let res = []
-            const formData = new FormData()
-            formData.append('state', 5)
-            formData.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
-            for (const id of this.listOrderIds) {
-                res = await this.updateOrder([id, formData])
-                const formAsignacion = new FormData()
-                formAsignacion.append('order_id', id)
-                formAsignacion.append('employee_id', this.getUser.employee.id)
-                formAsignacion.append('process_id', 5)
-                let resAsign = await this.createAssignmentOrder(formAsignacion)
-                if (resAsign[0] == 0) {
-                    await Swal.fire({
-                        position: 'top-end',
-                        text: 'Error al asignar personal',
-                        color: 'white',
-                        background: 'red',
-                        showConfirmButton: false,
-                        timer: 1200
-                    })
-                }
+            const client = await this.createClientByPayment(formCliente)
+            // 2. Agregar registros a Voucher y Voucher_Detail
+            const formVoucher = new FormData()
+            formVoucher.append('doc_type', this.tipoDoc <= 2 ? '03' : '01')
+            if (this.correlativo.length > 0) {
+                formVoucher.append('serie', this.tipoDoc <= 2 ? 'B001' : 'F001')
+                formVoucher.append('correlative', this.correlativo)
             }
-            if (res[0] != 0) {
-                // 3. Agregar registros a Voucher y Voucher_Detail
-                const formVoucher = new FormData()
-                formVoucher.append('doc_type', this.tipoDoc <= 2 ? '03' : '01')
-                if (this.correlativo.length > 0) {
-                    formVoucher.append('serie', this.tipoDoc <= 2 ? 'B001' : 'F001')
-                    formVoucher.append('correlative', this.correlativo)
+            formVoucher.append('tax_value', this.montoIgv)
+            formVoucher.append('total_no_tax', this.getTotalNoIGV)
+            formVoucher.append('tax_amount', this.getTotalNoIGV * this.montoIgv / 100)
+            formVoucher.append('total_tax', this.getTotal)
+            formVoucher.append('total_tax_text', readNumbersAsText(this.getTotal, {
+                plural: "SOLES",
+                singular: "SOL",
+                centPlural: "CÉNTIMOS",
+                centSingular: "CÉNTIMO"
+            }))
+            formVoucher.append('reference', '')
+            formVoucher.append('state', 1)
+            formVoucher.append('table_id', this.table.id)
+            if (client) {
+                formVoucher.append('client_id', client.id)
+            }
+            formVoucher.append('payment_method_id', this.payment_method.id)
+            formVoucher.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
+            const resVoucher = await this.createVoucher(formVoucher)
+            if (resVoucher[0] != 0) {
+                for (const item of this.listOrderDetailsGroup) {
+                    const formVoucherDetail = new FormData()
+                    formVoucherDetail.append('unit', 'NIU')
+                    formVoucherDetail.append('amount', item.amount.toFixed(2))
+                    // formVoucherDetail.append('sku', '')
+                    formVoucherDetail.append('category', item.menu_detail.item_menu.category.name)
+                    formVoucherDetail.append('item_menu', item.menu_detail.item_menu.name)
+                    formVoucherDetail.append('price_no_tax', ((item.price * 100) / (100 + this.montoIgv)).toFixed(2))
+                    formVoucherDetail.append('price_tax', item.price.toFixed(2))
+                    formVoucherDetail.append('subtotal', (item.amount * ((item.price * 100) / (100 + this.montoIgv))).toFixed(2))
+                    formVoucherDetail.append('total', (item.amount * item.price).toFixed(2))
+                    formVoucherDetail.append('voucher_id', resVoucher[0])
+                    await this.createVoucherDetail(formVoucherDetail)
                 }
-                formVoucher.append('tax_value', this.montoIgv)
-                formVoucher.append('total_no_tax', this.getTotalNoIGV)
-                formVoucher.append('tax_amount', this.getTotalNoIGV * this.montoIgv / 100)
-                formVoucher.append('total_tax', this.getTotal)
-                formVoucher.append('total_tax_text', readNumbersAsText(this.getTotal, {
-                    plural: "SOLES",
-                    singular: "SOL",
-                    centPlural: "CÉNTIMOS",
-                    centSingular: "CÉNTIMO"
-                }))
-                formVoucher.append('reference', '')
-                formVoucher.append('state', 1)
-                formVoucher.append('table_id', this.table.id)
-                formVoucher.append('payment_method_id', this.payment_method.id)
-                formVoucher.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
-                const resVoucher = await this.createVoucher(formVoucher)
-                if (resVoucher[0] != 0) {
-                    for (const item of this.listOrderDetailsGroup) {
-                        const formVoucherDetail = new FormData()
-                        formVoucherDetail.append('unit', 'NIU')
-                        formVoucherDetail.append('amount', item.amount.toFixed(2))
-                        // formVoucherDetail.append('sku', '')
-                        formVoucherDetail.append('category', item.menu_detail.item_menu.category.name)
-                        formVoucherDetail.append('item_menu', item.menu_detail.item_menu.name)
-                        formVoucherDetail.append('price_no_tax', ((item.price * 100) / (100 + this.montoIgv)).toFixed(2))
-                        formVoucherDetail.append('price_tax', item.price.toFixed(2))
-                        formVoucherDetail.append('subtotal', (item.amount * ((item.price * 100) / (100 + this.montoIgv))).toFixed(2))
-                        formVoucherDetail.append('total', (item.amount * item.price).toFixed(2))
-                        formVoucherDetail.append('voucher_id', resVoucher[0])
-                        await this.createVoucherDetail(formVoucherDetail)
+                // 2. Actualizar estado de pedidos y asignación de personal que cobra
+                let res = []
+                const formData = new FormData()
+                formData.append('state', 5)
+                formData.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
+                formData.append('voucher_id', resVoucher[0])
+                for (const id of this.listOrderIds) {
+                    res = await this.updateOrder([id, formData])
+                    const formAsignacion = new FormData()
+                    formAsignacion.append('order_id', id)
+                    formAsignacion.append('employee_id', this.getUser.employee.id)
+                    formAsignacion.append('process_id', 5)
+                    let resAsign = await this.createAssignmentOrder(formAsignacion)
+                    if (resAsign[0] == 0) {
+                        await Swal.fire({
+                            position: 'top-end',
+                            text: 'Error al asignar personal',
+                            color: 'white',
+                            background: 'red',
+                            showConfirmButton: false,
+                            timer: 1200
+                        })
                     }
+                }
+                if (res[0] != 0) {
                     Swal.fire('Cobro exitoso', 'Se realizó el pago correctamente', 'success')
                 } else {
-                    Swal.fire('Cobro exitoso', 'Se realizó el pago, pero no se guardó el voucher', 'success')
+                    Swal.fire('Cobro exitoso', 'Se guardó el voucher, pero no se realizó el pago', 'success')
                 }
             } else {
-                Swal.fire('Error', 'Error no se pudo realizar el pago. ' + res[1], 'error')
+                Swal.fire('Error', 'Error no se pudo realizar el pago. ' + resVoucher[1], 'error')
             }
             // 4. Limpiar datos
             this.limpiar()
