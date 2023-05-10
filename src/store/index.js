@@ -22,6 +22,7 @@ import balance_caja from "@/store/caja/balance"
 import metodo_pago from "@/store/local/metodo_pago"
 import comprobante from "@/store/caja/voucher"
 import posicion_objeto from "@/store/local/objetos"
+import control_insumo from "@/store/almacen/control_insumo"
 
 const store = createStore({
     modules: {
@@ -47,7 +48,8 @@ const store = createStore({
         balance_caja,
         metodo_pago,
         comprobante,
-        posicion_objeto
+        posicion_objeto,
+        control_insumo
     }
 })
 

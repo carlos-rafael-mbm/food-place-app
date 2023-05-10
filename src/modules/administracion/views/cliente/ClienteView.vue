@@ -309,7 +309,8 @@ export default {
                 image: ''
             },
             obtained_parameter: null,
-            headers: [],
+            headersDNI: [],
+            headersRUC: [],
             searchField: '',
             searchValue: '',
             themeColor: "#856826"

@@ -55,6 +55,14 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-menu-view'})"></v-list-item>
                     <v-list-item
+                        prepend-icon="mdi-food-variant"
+                        title="Insumos por plato/bebida"
+                        value="insumos"
+                        active-class="bgYellowActive animate__animated animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-supply-view'})"></v-list-item>
+                    <v-list-item
                         v-if="user.role && user.role.id == 10000"
                         prepend-icon="mdi-percent-circle"
                         title="Promociones"
