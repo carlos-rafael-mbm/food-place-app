@@ -309,7 +309,8 @@ export default {
                 image: ''
             },
             obtained_parameter: null,
-            headers: [],
+            headersDNI: [],
+            headersRUC: [],
             searchField: '',
             searchValue: '',
             themeColor: "#856826"
@@ -328,7 +329,6 @@ export default {
     },
     watch:{
         obtained_parameter(oldValue, newValue){
-            console.log(this.obtained_parameter)
             if(oldValue!=newValue){
                 this.client.doc_type=this.obtained_parameter.value
             }            

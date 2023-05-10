@@ -16,6 +16,20 @@ export const loadBranches = async({commit}) => {
     }
 }
 
+export const loadBranchWarehousesDetailByMain = async({commit}) => {
+    let branch_warehouses_detail = []
+    try {
+        const { data } = await foodplaceApi.get(`/branch_warehouses_detail/search-main-branch`)
+        for (const entry of Array.prototype.entries.call(data)) {
+            branch_warehouses_detail.push({...entry[1], orden: entry[0] + 1})
+        }
+    } catch (error) {
+        branch_warehouses_detail = []
+    } finally {
+        commit('setBranchWarehousesDetail', branch_warehouses_detail)
+    }
+}
+
 export const loadBranchWarehousesDetail = async({commit}, id) => {
     let branch_warehouses_detail = []
     try {

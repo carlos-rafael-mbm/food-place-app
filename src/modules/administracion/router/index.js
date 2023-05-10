@@ -29,6 +29,12 @@ export default {
             component: () => import(/* webpackChunkName: "administracion-menu-view" */ '@/modules/administracion/views/menu/MenuView.vue')
         },
         {
+            path: '/administracion/insumos-item-menu',
+            name: 'adm-supply-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-supply-view" */ '@/modules/administracion/views/insumo_item_menu/InsumoItemMenuView.vue')
+        },
+        {
             path: '/administracion/promos',
             name: 'adm-promo-view',
             beforeEnter: [isAuthenticatedAdmin],
