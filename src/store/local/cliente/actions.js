@@ -30,6 +30,19 @@ export const createClient = async ({commit}, form) => {
     }
 }
 
+export const createClientByPayment = async (_, form) => {
+    try {
+        const {data} = await foodplaceApi.post('/clients/payment', form)
+        const { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image } = data['cliente-creado']
+        const cliente_nuevo = { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image }
+        return cliente_nuevo
+    } catch (err) {
+        if (err.response) {
+            return null
+        }
+    }
+}
+
 export const updateClient = async({commit}, form) => {
     try {
         const idClient = form[0]

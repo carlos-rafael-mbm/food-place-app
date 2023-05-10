@@ -328,7 +328,6 @@ export default {
     },
     watch:{
         obtained_parameter(oldValue, newValue){
-            console.log(this.obtained_parameter)
             if(oldValue!=newValue){
                 this.client.doc_type=this.obtained_parameter.value
             }            
@@ -403,7 +402,6 @@ export default {
                 formData.append('image', this.client.image ? this.client.image : '')
                 res = await this.createClient(formData)
             } else {
-                console.log(this.client.doc_type)
                 const formData = new FormData()
                 formData.append('doc_type', this.client.doc_type)
                 formData.append('doc_number', this.client.doc_number)

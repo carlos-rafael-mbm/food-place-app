@@ -2,6 +2,10 @@ export const setVouchers = (state, vouchers) => {
     state.vouchers = [...vouchers]
 }
 
+export const setAllVouchers = (state, vouchers) => {
+    state.vouchers_all = [...vouchers]
+}
+
 export const setVoucherDetails = (state, voucher_details) => {
     state.voucher_details = [...voucher_details]
 }
