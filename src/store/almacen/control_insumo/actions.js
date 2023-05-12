@@ -44,6 +44,21 @@ export const updateSupplyControl = async({commit}, form) => {
     }
 }
 
+// export const updateSupplyControlOutput = async(_, form) => {
+//     try {
+//         const idItemMenu = form[0]
+//         const dataControl = form[1]
+//         const {data} = await foodplaceApi.put(`/supplies_control/order/${idItemMenu}`, dataControl)
+//         console.log(data.message)
+//         return [1, data.message]
+//     } catch (err) {
+//         if (err.response) {
+//             console.log(err.response.data.message)
+//             return [0, err.response.data.message]
+//         }
+//     }
+// }
+
 export const deleteSupplyControl = async ({commit}, id) => {
     await foodplaceApi.delete(`/supplies_control/${id}`)
     commit('deleteSupplyControl', id)

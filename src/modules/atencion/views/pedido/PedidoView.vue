@@ -215,6 +215,7 @@ export default {
     },
     methods: {
         ...mapActions('pedido', ['loadOrdersToServe', 'loadOrderDetails', 'createOrderDetail', 'createAssignmentOrder', 'updateOrder', 'updateOrderDetail', 'deleteOrderDetail', 'clearOrderDetails']),
+        ...mapActions('salida_insumo', ['createSupplyOutputByItemMenu']),
         getWidthScreen() {
             if (window.innerWidth >= 800) {
                 this.widthScreen = 4
@@ -332,6 +333,11 @@ export default {
                     })
                 }
                 if (res[0] != 0) {
+                    for (const orderDetail of this.order_details) {
+                        const formSupplyOutput = new FormData()
+                        formSupplyOutput.append('items_count', orderDetail.amount)
+                        await this.createSupplyOutputByItemMenu([orderDetail.menu_detail.item_menu.id, formSupplyOutput])
+                    }
                     Swal.fire('Atendido', 'La orden fue entregada', 'success')
                 } else {
                     Swal.fire('Error', 'Error al cambiar el estado de la orden a Atendida', 'error')

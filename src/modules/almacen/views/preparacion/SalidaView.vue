@@ -1,0 +1,347 @@
+<template>
+    <div class="row justify-content-center align-items-center" style="height: 90vh" v-if="isLoading">
+        <div class="col-auto text-center mt-5" style="font-size: 2.5em">
+            Espere por favor...
+            <h3 class="mt-2">
+                <v-progress-circular
+                    indeterminate
+                    size="100"
+                    width="12"
+                    color="green">
+                </v-progress-circular>
+            </h3>
+        </div>
+    </div>
+    <div v-else id="movements-preparation" class="d-flex">
+        <div class="text-center d-flex justify-content-center" style="width:100%">
+            <div class="panel-movements-preparation justify-content-center align-items-center">
+                <div class="my-3 d-flex align-center flex-column">
+                    <v-card
+                        title="Salidas por preparación"
+                        class="text-center text-light titulo animate__animated animate__flipInY">
+                    </v-card>
+                </div>
+                <v-form ref="form" lazy-validation>
+                    <div class="row justify-content-center mb-4">
+                        <div id="formulario" class="animate__animated animate__flipInY">
+                            <div class="control-form justify-content-center mt-5">
+                                <div class="left-control">
+                                    <v-combobox
+                                        v-model="supplyOutput.branch_warehouse_detail"
+                                        :items="getSuppliesToSelect"
+                                        item-value="id"
+                                        item-title="name"
+                                        prepend-inner-icon="mdi-shaker"                                    
+                                        :rules="[rules.requiredSelection]"
+                                        hide-details="auto"
+                                        label="Insumo">
+                                    </v-combobox>
+                                </div>
+                                <div class="right-control text-center">
+                                    <v-text-field
+                                        label="Ingrese cantidad"
+                                        type="number"
+                                        :rules="[rules.required]"
+                                        v-model="supplyOutput.amount"
+                                        required>
+                                    </v-text-field>
+                                </div>
+                            </div>
+                            <hr style="border-top: 5px solid; margin-bottom: 10px">
+                            <div class="text-center">
+                                <v-btn prepend-icon="mdi-broom" class="mb-3 mx-4" rounded color="#E75D48" @click="limpiarCampos()">Limpiar campos</v-btn>
+                                <v-btn prepend-icon="mdi-content-save" class="mb-3 mx-5" rounded color="#E75D48" @click="guardarMovimiento()">Guardar</v-btn>
+                            </div>
+                        </div>
+                        <br>
+                    </div>
+                </v-form>
+                <div id="tablaSalidas" class="animate__animated animate__flipInY">
+                    <easy-data-table
+                        :headers="headers"
+                        :items="getSupplyOutputByType()"
+                        :theme-color="themeColor"
+                        :rows-per-page="10"
+                        table-class-name="customize-table"
+                        header-class-name="text-center"
+                        alternating
+                        show-index
+                        buttons-pagination
+                        rows-per-page-message="Filas por página"
+                        empty-message="No hay datos de salidas por preparación">
+                        <template #item-action="item">
+                            <div class="action-wrapper">
+                                <v-btn icon="mdi-square-edit-outline" class="text-center me-2" color="blue" size="x-small" @click="cargarMovimiento(item.id)"></v-btn>
+                                <v-btn icon="mdi-trash-can-outline" class="text-center ms-2" color="#E75D48" size="x-small" @click="eliminarMovimiento(item.id)"></v-btn>
+                            </div>
+                        </template>
+                        <template #item-amount="item">
+                            <div class="text-center">
+                                {{ item.amount }}
+                            </div>
+                        </template>
+                    </easy-data-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import { mapActions, mapGetters, mapState } from 'vuex'
+import Swal from "sweetalert2";
+
+export default {
+    data() {
+        return {
+            isLoading: true,
+            rules: {
+                required: value => !!value || 'Campo requerido',
+                requiredSelection: value => {
+                    if (value instanceof Array && value.length == 0) {
+                        return 'Campo requerido'
+                    }
+                    return !!value || 'Campo requerido'
+                }
+            },
+            supplyOutput: {
+                id: 0,
+                amount: 0,
+                type_output: 2,
+                branch_warehouse_detail: null
+            },
+            headers: [],
+            themeColor: "#856826"
+        }
+    },
+    computed: {
+        ...mapState('almacen', ['branch_warehouses_detail']),
+        ...mapGetters('almacen', ['getSuppliesToSelect']),
+        ...mapGetters('salida_insumo', ['getSupplyOutputByType', 'getSupplyOutputByIdToSelect'])
+    },
+    methods: {
+        ...mapActions('almacen', ['loadBranchWarehousesDetailByMain']),
+        ...mapActions('salida_insumo', ['loadSuppliesOutput', 'createSupplyOutput', 'updateSupplyOutput', 'deleteSupplyOutput']),
+        async limpiarCampos() {
+            this.supplyOutput.id = 0
+            this.supplyOutput.amount = 0
+            this.supplyOutput.branch_warehouse_detail = null
+            setTimeout(() => {
+                this.$refs.form.resetValidation()
+            }, 200);
+        },
+        async guardarMovimiento() {
+            this.$refs.form.validate()
+            if (this.supplyOutput.amount <= 0 || !this.supplyOutput.branch_warehouse_detail) return
+            new Swal({
+                title: 'Espere por favor',
+                allowOutsideClick: false
+            })
+            if (!this.supplyOutput.branch_warehouse_detail) {
+                Swal.fire('Error', 'Debe seleccionar un insumo para realizar esta operación', 'error')
+                return
+            }
+            if (this.supplyOutput.amount <= 0) {
+                Swal.fire('Error', 'El monto no puede ser 0 ó negativo', 'error')
+                return
+            }
+            Swal.showLoading()
+            let res = []
+            if (this.supplyOutput.id == 0) {
+                const formData = new FormData()
+                formData.append('amount', this.supplyOutput.amount)
+                formData.append('type_output', this.supplyOutput.type_output)
+                formData.append('branch_warehouse_detail_id', this.supplyOutput.branch_warehouse_detail.id)
+                res = await this.createSupplyOutput(formData)
+            } else {
+                const formData = new FormData()
+                formData.append('amount', this.supplyOutput.amount)
+                formData.append('branch_warehouse_detail_id', this.supplyOutput.branch_warehouse_detail.id)
+                res = await this.updateSupplyOutput([this.supplyOutput.id, formData])
+            }
+            if (res[0] != 0) {
+                Swal.fire('Guardado', this.supplyOutput.id == 0 ? 'Se guardó movimiento' : 'Se actualizaron los datos del movimiento', 'success')
+                this.limpiarCampos()
+            } else {
+                Swal.fire('Error', res[1], 'error')
+            }
+        },
+        cargarMovimiento(id) {
+            new Swal({
+                title: 'Espere por favor',
+                allowOutsideClick: false
+            })
+            Swal.showLoading()
+            let movement = this.getSupplyOutputByIdToSelect(id)
+            if (!movement) {
+                Swal.fire('Error', 'No se pudo cargar los datos del movimiento de salida seleccionado', 'error')
+            } else {
+                this.supplyOutput = movement
+                Swal.close()
+            }
+        },
+        async eliminarMovimiento(id) {
+            const {isConfirmed} = await Swal.fire({
+                title: '¿Está seguro?',
+                text: 'Se va a eliminar el movimiento seleccionado',
+                showDenyButton: true,
+                denyButtonColor: '#E75D48',
+                denyButtonText: ' <i class="fa fa-thumbs-down"></i>  No, mejor no',
+                confirmButtonColor: '#679A50',
+                confirmButtonText: '<i class="fa fa-thumbs-up"></i>  Sí, estoy seguro',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                },
+                background: '#F7F5B2'
+            })
+            if (isConfirmed) {
+                new Swal({
+                    title: 'Espere por favor',
+                    allowOutsideClick: false
+                })
+                Swal.showLoading()
+                await this.deleteSupplyOutput(id)
+                Swal.fire('Eliminado', 'Se eliminó el movimiento', 'success')
+                this.limpiarCampos()
+            }
+        }
+    },
+    async mounted() {
+        await this.loadBranchWarehousesDetailByMain()
+        await this.loadSuppliesOutput()
+        this.headers = [
+            { text: "Insumo", value: "branch_warehouse_detail.supply.name", sortable: true, width: 200 },
+            { text: "Monto", value: "amount", width: 100 },
+            { text: "Acciones", value: "action", width: 120 }
+        ]
+        this.isLoading = false
+    }
+}
+</script>
+
+<style lang="scss" scoped>
+.titulo {
+    background-color: rgba(231, 93, 72, 0.9);
+    border-radius: 20px;
+    font-size: 32px;
+    width: 260px;
+}
+#formulario {
+    background-color: rgba(241, 196, 15, 0.6);
+    border-radius: 20px;
+}
+#movements-preparation {
+    height: 100vh;
+    overflow-y: auto;
+    background: url('@/assets/Fondo-Alm.png');
+    background-size: cover;
+}
+.panel-movements-preparation {
+    width: 50%;
+}
+.control-form {
+    display: flex;
+}
+.left-control {
+    margin-left: 2em;
+    margin-right: 2em;
+    width: 50%;
+}
+.right-control {
+    margin-left: 2em;
+    margin-right: 2em;
+    width: 50%;
+}
+.middle-control {
+    margin-left: 2em;
+    margin-right: 2em;
+    width: 50%;
+}
+#tablaSalidas {
+    padding-bottom: 100px;
+}
+.botonCargar {
+    margin-right: 10px;
+}
+.botonEliminar {
+    margin-left: 10px;
+}
+.fondo-tabla {
+    background-color: lighten($color: #856826, $amount: 40);
+}
+/* Estilos para motores Webkit y blink (Chrome, Safari, Opera... )*/
+#movements-preparation::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+#movements-preparation::-webkit-scrollbar:vertical {
+    width:1px;
+}
+#movements-preparation::-webkit-scrollbar-button:increment,#item_menu::-webkit-scrollbar-button {
+    display: none;
+} 
+#movements-preparation::-webkit-scrollbar:horizontal {
+    height: 10px;
+}
+#movements-preparation::-webkit-scrollbar-thumb {
+    background-color: #797979;
+    border-radius: 20px;
+}
+#movements-preparation::-webkit-scrollbar-track {
+    border-radius: 10px;  
+}
+.customize-table {
+    --easy-table-border: 1px solid #856826;
+    --easy-table-row-border: 1px solid #856826;
+
+    --easy-table-header-font-color: white;
+    --easy-table-header-background-color: #E75D48;
+
+    --easy-table-body-even-row-background-color: #CFBF88;
+    --easy-table-body-row-background-color: #CFBF88; //lighten($color: #856826, $amount: 40);
+    --easy-table-body-row-hover-background-color: #D5ADA7;
+
+    --easy-table-footer-background-color: #E75D48;
+    --easy-table-footer-font-color: white;
+
+    --easy-table-rows-per-page-selector-width: 70px;
+    --easy-table-rows-per-page-selector-option-padding: 10px;
+}
+@media (max-width: 950px) {
+    /* For mobile phones: */
+    .panel-movements-preparation {
+        width: 90%;
+    }
+    #formulario {
+        width: 96%;
+        margin-left: 0px;
+        margin-right: 0px;
+    }
+    .control-form {
+        display: block;
+    }
+    .left-control {
+        margin-left: 0.3em;
+        margin-right: 0.6em;
+        width: 97%;
+    }
+    .right-control {
+        margin-left: 0.3em;
+        margin-right: 0.6em;
+        width: 97%;
+    }
+    .middle-control {
+        margin-left: 0.3em;
+        margin-right: 0.3em;
+        width: 97%;
+    }
+    .botonCargar {
+        margin-right: 1px;
+    }
+    .botonEliminar {
+        margin-left: 1px;
+    }
+}
+</style>

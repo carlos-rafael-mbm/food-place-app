@@ -70,6 +70,15 @@
                         density="compact"
                         class="bgYellow"
                         @click="$router.push({name: 'alm-supplies-warehouse-view'})"></v-list-item>
+                    <v-list-subheader color="white">PREPARACIÓN</v-list-subheader>
+                    <v-list-item
+                        prepend-icon="mdi-swap-horizontal"
+                        title="Salidas por preparación"
+                        value="salidas_preparacion"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="$router.push({name: 'alm-output-preparation-view'})"></v-list-item>
                     <v-list-subheader color="white">INVENTARIO</v-list-subheader>
                     <v-list-item
                         prepend-icon="mdi-archive-arrow-down"
