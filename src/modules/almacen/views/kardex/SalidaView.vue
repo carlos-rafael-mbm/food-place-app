@@ -102,7 +102,7 @@
                                             {{item.amount_used}}
                                         </div>
                                         <div style="width: 15%">
-                                            <input type="number" v-model="item.stock_count" min="0" max="1000" class="cantidad cantidad-edit text-right">
+                                            <input type="number" :value="item.stock_count.toFixed(2)" min="0" max="1000" class="cantidad cantidad-edit text-right">
                                         </div>
                                         <div style="width: 15%">
                                             {{(item.stock - item.stock_count).toFixed(2)}}
@@ -165,6 +165,7 @@ export default {
     methods: {
         ...mapActions('almacen', ['loadBranches', 'loadBranchWarehousesDetailOutput', 'updateBranchWarehouseDetail', 'updateSupplyControl']),
         ...mapActions('kardex', ['createKardex', 'createKardexDetail']),
+        ...mapActions('salida_insumo', ['deleteAllSuppliesOutput']),
         getFechaActual() {
             const date = new Date(Date.now())
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
@@ -247,11 +248,11 @@ export default {
                         }
                     }
                 }
-                const resSupplyControl = await this.updateSupplyControl(this.kardex.branch.id)
-                if (resSupplyControl[0] == 0) {
+                const resSupplyOutput = await this.deleteAllSuppliesOutput()
+                if (resSupplyOutput[0] == 0) {
                     await Swal.fire({
                         position: 'top-end',
-                        text: 'Error al limpiar stock utilizado de los insumos',
+                        text: 'Error al limpiar todas las salidas de los insumos',
                         color: 'white',
                         background: '#D96E4C',
                         timerProgressBar: true,

@@ -46,3 +46,10 @@ export const getDetailByBranch = (state) => (idBranch = '', idItem = '') => {
     if (!branch_warehouse_detail) return
     return {...branch_warehouse_detail}
 }
+
+export const getSuppliesToSelect = (state) => {
+    let supplies = []
+    state.branch_warehouses_detail.map(m => supplies.push({id: m.id, name: `${m.supply.name} (${m.stock.toFixed(2)} ${m.supply.measurement_unit.abbreviation})`}))
+    if (!supplies) return
+    return [...supplies]
+}
