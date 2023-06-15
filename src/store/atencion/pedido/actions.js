@@ -109,6 +109,22 @@ export const loadOrdersByAssigment = async(_, assignment_id) => {
     }
 }
 
+export const loadOrdersToPrint = async({commit}) => {
+    const orders = []
+    try {
+        const { data } = await foodplaceApi.get('/orders/print')
+        for (const entry of Array.prototype.entries.call(data)) {
+            orders.push({...entry[1], orden: entry[0] + 1})
+        }
+        if (orders) {
+            orders.sort((a, b) => b.id - a.id)
+        }
+        commit('setOrders', orders)
+    } catch (error) {
+        commit('setOrders', orders)
+    }
+}
+
 export const loadMostRequestedItemsByMonth = async(_, filter) => {
     const orders = []
     const year = filter[0]

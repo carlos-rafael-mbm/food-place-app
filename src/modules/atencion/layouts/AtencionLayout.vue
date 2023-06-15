@@ -46,6 +46,14 @@
                         class="bgBrown"
                         @click="$router.push({name: 'atencion-nuevo-view'})"></v-list-item>
                     <v-list-item
+                        prepend-icon="mdi-printer"
+                        title="Impresión de pedidos"
+                        value="impresion_pedidos"
+                        active-class="bgBrownActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgBrown"
+                        @click="$router.push({name: 'atencion-order-to-print-view'})"></v-list-item>
+                    <v-list-item
                         prepend-icon="mdi-store"
                         title="Distribución de mesas"
                         value="distribucion"

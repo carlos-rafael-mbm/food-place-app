@@ -17,6 +17,12 @@ export default {
             component: () => import(/* webpackChunkName: "atencion-nuevo-view" */ '@/modules/atencion/views/nuevo-pedido/NuevoPedidoView.vue')
         },
         {
+            path: '/atencion/impresion',
+            name: 'atencion-order-to-print-view',
+            beforeEnter: [isAuthenticatedWaiter],
+            component: () => import(/* webpackChunkName: "atencion-order-to-print-view" */ '@/modules/atencion/views/pedido/PedidoImpresionView.vue')
+        },
+        {
             path: '/atencion/pedidos',
             name: 'atencion-order-view',
             beforeEnter: [isAuthenticatedWaiter],

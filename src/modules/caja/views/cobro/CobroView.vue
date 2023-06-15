@@ -25,15 +25,16 @@
             <div class="justify-content-center align-items-center mt-4" style="margin-bottom: -12px">
                 <div id="formulario" class="animate__animated animate__flipInY mx-auto">
                     <div class="justify-content-center align-items-center">
-                        <v-combobox
+                        <v-select
                             v-model="table"
                             :items="getActiveTables()"
                             item-value="id"
                             item-title="number"
                             label="Seleccione una mesa"
                             variant="solo"
-                            bg-color="#E3CD83">
-                        </v-combobox>
+                            bg-color="#E3CD83"
+                            return-object>
+                        </v-select>
                     </div>
                 </div>
             </div>
@@ -119,7 +120,7 @@
                         </div>
                     </v-toolbar>
                     <v-list class="bgDialog">
-                        <div v-if="toEdit" class="d-flex justify-content-center align-items-center mx-8 mt-3">
+                        <!-- <div v-if="toEdit" class="d-flex justify-content-center align-items-center mx-8 mt-3">
                             <v-combobox
                                 label="Seleccione promoción"
                                 v-model="promotion"
@@ -129,7 +130,7 @@
                                 :rules="[rules.requiredSelection]"
                                 required>
                             </v-combobox>
-                        </div>
+                        </div> -->
                         <v-list-item
                             v-for="(item, i) in isPayment ? listOrderDetailsGroup : order_details"
                             :key="i"
@@ -362,7 +363,6 @@ export default {
     },
     computed: {
         ...mapState('pedido', ['orders', 'order_details']),
-        ...mapState('promocion', ['promotions']),
         ...mapState('parametro', ['parameters']),
         ...mapState('metodo_pago', ['payment_methods']),
         ...mapState('comprobante', ['vouchers_all']),
@@ -391,7 +391,6 @@ export default {
     },
     methods: {
         ...mapActions('pedido', ['loadOrders', 'loadOrderDetails', 'clearOrderComplete', 'clearOrderDetails', 'updateOrder', 'updateOrderDetail', 'createAssignmentOrder']),
-        ...mapActions('promocion', ['loadActivePromotions']),
         ...mapActions('parametro', ['loadParameters']),
         ...mapActions('mesa', ['loadTables']),
         ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByEmployee']),
@@ -785,7 +784,7 @@ export default {
             comprobante.tipoOperacion = '0101' // SUNAT: Venta interna
             comprobante.tipoDoc = this.tipoDoc <= 2 ? '03' : '01' // SUNAT: Boleta (3), Factura (1)
             comprobante.serie = this.tipoDoc <= 2 ? 'B001' : 'F001'
-            comprobante.correlativo = this.getMaxCorrelative(this.tipoDoc <= 2 ? 'B' : 'F')
+            comprobante.correlativo = await this.getMaxCorrelative(this.tipoDoc <= 2 ? 'B' : 'F')
             comprobante.fechaEmision = fechaActual.toISOString().slice(0, -5) + '-05:00'
             comprobante.formaPago = {}
             comprobante.formaPago.moneda = 'PEN'
@@ -806,12 +805,12 @@ export default {
             comprobante.company.address.provincia = 'Cusco'
             comprobante.company.address.departamento = 'Cusco'
             comprobante.company.address.distrito = 'Cusco'
-            comprobante.mtoOperGravadas = totalNoIGV
-            comprobante.mtoIGV = totalNoIGV * this.montoIgv / 100
-            comprobante.valorVenta = totalNoIGV
-            comprobante.totalImpuestos = totalNoIGV * this.montoIgv / 100
-            comprobante.subTotal = total
-            comprobante.mtoImpVenta = total
+            comprobante.mtoOperGravadas = parseFloat(totalNoIGV.toFixed(2))
+            comprobante.mtoIGV = parseFloat((totalNoIGV * this.montoIgv / 100).toFixed(2))
+            comprobante.valorVenta = parseFloat(totalNoIGV.toFixed(2))
+            comprobante.totalImpuestos = parseFloat((totalNoIGV * this.montoIgv / 100).toFixed(2))
+            comprobante.subTotal = parseFloat(total.toFixed(2))
+            comprobante.mtoImpVenta = parseFloat(total.toFixed(2))
             // Construir detalle
             comprobante.details = []
             this.listOrderDetailsGroup.map(x => {
@@ -819,13 +818,13 @@ export default {
                 detalle.unidad = 'NIU'
                 detalle.descripcion = x.menu_detail.item_menu.name
                 detalle.cantidad = x.amount
-                detalle.mtoValorUnitario = (x.price * 100) / (100 + this.monto)
-                detalle.mtoValorVenta = x.amount * ((x.price * 100) / (100 + this.monto))
-                detalle.mtoBaseIgv = x.amount * ((x.price * 100) / (100 + this.monto))
+                detalle.mtoValorUnitario = parseFloat(((x.price * 100) / (100 + this.montoIgv)).toFixed(2))
+                detalle.mtoValorVenta = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv))).toFixed(2))
+                detalle.mtoBaseIgv = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv))).toFixed(2))
                 detalle.porcentajeIgv = this.montoIgv
-                detalle.igv = this.montoIgv
+                detalle.igv = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv)) * (this.montoIgv / 100)).toFixed(2))
                 detalle.tipAfeIgv = 10
-                detalle.totalImpuestos = x.amount * ((x.price * 100) / (100 + this.monto)) * (this.montoIgv / 100)
+                detalle.totalImpuestos = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv)) * (this.montoIgv / 100)).toFixed(2))
                 detalle.mtoPrecioUnitario = x.price
                 comprobante.details.push(detalle)
             })
@@ -841,28 +840,26 @@ export default {
             comprobante.legends.push(legend)
             try {
                 // Revisar envio de datos a SUNAT (error por certificado digital)
-                // const rptaEnvio = await facturacionApi.post('/invoice/send', comprobante)
-                // console.log(rptaEnvio)
-                const rpta = await facturacionApi.post('/invoice/pdf', comprobante, {
-                    responseType: 'blob',
-                    headers: {
-                        'Accept': 'application/pdf'
-                    }
-                })
-                this.correlativo = comprobante.correlativo
-                const url = URL.createObjectURL(rpta.data)
-                this.download(url, this.tipoDoc <= 2 ? `Boleta_${comprobante.correlativo}.pdf` : `Factura_${comprobante.correlativo}.pdf`)
-                URL.revokeObjectURL(url)
-                return true
+                const {data} = await facturacionApi.post('/invoice/send', comprobante)
+                
+                if (data.sunatResponse.success) {
+                    const rpta = await facturacionApi.post('/invoice/pdf', comprobante, {
+                        responseType: 'blob',
+                        headers: {
+                            'Accept': 'application/pdf'
+                        }
+                    })
+                    this.correlativo = comprobante.correlativo
+                    const url = URL.createObjectURL(rpta.data)
+                    this.download(url, this.tipoDoc <= 2 ? `Boleta_${comprobante.correlativo}.pdf` : `Factura_${comprobante.correlativo}.pdf`)
+                    URL.revokeObjectURL(url)
+                    return true
+                } else {
+                    Swal.fire('Error SUNAT', `${data.sunatResponse.error.code} ${data.sunatResponse.error.message}`, 'error')
+                    return false
+                }
             } catch (error) {
-                await Swal.fire({
-                    position: 'top-end',
-                    text: 'Error al generar Comprobante ',
-                    color: 'white',
-                    background: 'red',
-                    showConfirmButton: false,
-                    timer: 1200
-                })
+                Swal.fire('Error SUNAT', 'Error al realizar operaciones con SUNAT. No se procesó la operación', 'error')
                 return false
             }
         },
@@ -998,7 +995,6 @@ export default {
         parameterFound = this.parameters.find(p => p.parameter_code == 1010 && p.item_code == 1013)
         this.habilitarSunat = parameterFound ? (parameterFound.value == '1' ? true : false) : false
         await this.clearOrderComplete()
-        await this.loadActivePromotions()
         this.cashRegisterAssignment = await this.loadLastCashRegisterAssignmentByEmployee(this.getUser.employee.id)
         this.isLoading = false
         if (!this.cashRegisterAssignment) {
