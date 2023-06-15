@@ -39,47 +39,42 @@
                             </div>
                             <div class="mx-10 mb-2 d-flex align-center justify-center">
                                 <v-btn
-                                    v-if="order.state == 4"
-                                    prepend-icon="mdi-checkbox-marked-outline"
+                                    v-if="(!isVirtualCommand && order.state == 0) || order.state == 4"
+                                    icon="mdi-checkbox-marked-outline"
                                     class="mx-1"
-                                    size="x-small"
+                                    size="small"
                                     color="green"
                                     @click="atenderPedido(order.id)">
-                                    Atendido
                                 </v-btn>
                                 <v-btn
-                                    prepend-icon="mdi-eye-circle-outline"
+                                    icon="mdi-eye-circle-outline"
                                     class="mx-1"
-                                    size="x-small"
+                                    size="small"
                                     color="brown"
                                     @click="verPedido(order.id)">
-                                    Ver
                                 </v-btn>
                                 <v-btn
                                     v-if="order.state < 2"
-                                    prepend-icon="mdi-square-edit-outline"
+                                    icon="mdi-square-edit-outline"
                                     class="mx-1"
-                                    size="x-small"
+                                    size="small"
                                     color="blue"
                                     @click="editarPedido(order.id, order.state)">
-                                    Editar
                                 </v-btn>
                                 <v-btn
                                     v-if="order.state < 3"
-                                    prepend-icon="mdi-close-box-outline"
+                                    icon="mdi-close-box-outline"
                                     class="mx-1"
-                                    size="x-small"
+                                    size="small"
                                     color="red"
                                     @click="anularPedido(order.id)">
-                                    Anular
                                 </v-btn>
                                 <v-btn
-                                    prepend-icon="mdi-note-plus"
+                                    icon="mdi-note-plus"
                                     class="mx-1"
-                                    size="x-small"
+                                    size="small"
                                     color="#605d35"
                                     @click="abrirNota(order.id, order.customization)">
-                                    Notas
                                 </v-btn>
                             </div>
                         </v-card>
@@ -200,6 +195,7 @@ export default {
         return {
             isLoading: true,
             widthScreen: window.innerWidth >= 800 ? 4 : window.innerWidth >= 600 ? 6 : 12,
+            isVirtualCommand: false,
             idInterval: 0,
             order_id: 0,
             dialog: false,
@@ -211,11 +207,13 @@ export default {
     },
     computed: {
         ...mapState('pedido', ['orders', 'order_details']),
+        ...mapState('parametro', ['parameters']),
         ...mapGetters('login', ['getUser'])
     },
     methods: {
         ...mapActions('pedido', ['loadOrdersToServe', 'loadOrderDetails', 'createOrderDetail', 'createAssignmentOrder', 'updateOrder', 'updateOrderDetail', 'deleteOrderDetail', 'clearOrderDetails']),
         ...mapActions('salida_insumo', ['createSupplyOutputByItemMenu']),
+        ...mapActions('parametro', ['loadParameters']),
         getWidthScreen() {
             if (window.innerWidth >= 800) {
                 this.widthScreen = 4
@@ -310,9 +308,11 @@ export default {
                 })
                 Swal.showLoading()
                 await this.loadOrderDetails(id)
-                if (this.order_details.some(detail => detail.state != 2)) {
-                    Swal.fire('Error', 'Hay ítems que aún no han sido preparados', 'error')
-                    return
+                if (this.isVirtualCommand) {
+                    if (this.order_details.some(detail => detail.state != 2)) {
+                        Swal.fire('Error', 'Hay ítems que aún no han sido preparados', 'error')
+                        return
+                    }
                 }
                 const formData = new FormData()
                 formData.append('state', 2)
@@ -423,6 +423,9 @@ export default {
     },
     async mounted() {
         window.addEventListener("resize", this.getWidthScreen)
+        await this.loadParameters()
+        let parameterFound = this.parameters.find(p => p.parameter_code == 1030 && p.item_code == 1032)
+        this.isVirtualCommand = parameterFound ? (parameterFound.value === '0' ? false : true) : false
         await this.loadOrdersToServe(this.getUser.role.id == 1 || this.getUser.role.id == 9 ? 0 : this.getUser.employee.id)
         this.isLoading = false
         this.idInterval = setInterval(() => {
