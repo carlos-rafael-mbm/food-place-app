@@ -80,14 +80,22 @@
                         class="bgYellow"
                         @click="$router.push({name: 'alm-output-preparation-view'})"></v-list-item>
                     <v-list-subheader color="white">INVENTARIO</v-list-subheader>
-                    <v-list-item
+                    <!-- <v-list-item
                         prepend-icon="mdi-archive-arrow-down"
                         title="Entradas"
                         value="entradas"
                         active-class="bgYellowActive animate__animated animate__bounceIn"
                         density="compact"
                         class="bgYellow"
-                        @click="$router.push({name: 'alm-entry-view'})"></v-list-item>
+                        @click="$router.push({name: 'alm-entry-view'})"></v-list-item> -->
+                    <v-list-item
+                        prepend-icon="mdi-swap-horizontal"
+                        title="Movimientos E/S"
+                        value="movimientos"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="$router.push({name: 'alm-movements-view'})"></v-list-item>
                     <v-list-item
                         prepend-icon="mdi-counter"
                         title="Conteo de existencias"

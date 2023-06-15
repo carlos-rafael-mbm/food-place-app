@@ -46,11 +46,17 @@ export default {
             beforeEnter: [isAuthenticatedStorekeeper],
             component: () => import(/* webpackChunkName: "almacen-output-preparation-view" */ '@/modules/almacen/views/preparacion/SalidaView.vue')
         },
+        // {
+        //     path: '/almacen/entradas',
+        //     name: 'alm-entry-view',
+        //     beforeEnter: [isAuthenticatedStorekeeper],
+        //     component: () => import(/* webpackChunkName: "almacen-entry-view" */ '@/modules/almacen/views/kardex/EntradaView.vue')
+        // },
         {
-            path: '/almacen/entradas',
-            name: 'alm-entry-view',
+            path: '/almacen/movimientos',
+            name: 'alm-movements-view',
             beforeEnter: [isAuthenticatedStorekeeper],
-            component: () => import(/* webpackChunkName: "almacen-entry-view" */ '@/modules/almacen/views/kardex/EntradaView.vue')
+            component: () => import(/* webpackChunkName: "almacen-entry-view" */ '@/modules/almacen/views/kardex/MovimientosView.vue')
         },
         {
             path: '/almacen/conteo-existencias',

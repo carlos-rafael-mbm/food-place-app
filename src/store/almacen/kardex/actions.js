@@ -32,11 +32,27 @@ export const loadKardexDetails = async({commit}, id) => {
     }
 }
 
+export const loadMovementReasons = async({commit}) => {
+    commit('setLoading')
+    const movement_reasons = []
+    try {
+        const { data } = await foodplaceApi.get('/movement_reasons')
+        for (const entry of Array.prototype.entries.call(data)) {
+            movement_reasons.push({...entry[1], orden: entry[0] + 1})
+        }
+        commit('setMovementReasons', movement_reasons)
+    } catch (error) {
+        commit('setMovementReasons', movement_reasons)
+    } finally {
+        commit('setLoading')
+    }
+}
+
 export const createKardex = async ({commit}, kardex) => {
     try {
         const {data} = await foodplaceApi.post('/kardex', kardex)
-        const { id, date, movement_type, employee, warehouse } = data['kardex-creado']
-        const kardex_nuevo = { id, date, movement_type, employee, warehouse }
+        const { id, date, specification, movement_reason, employee} = data['kardex-creado']
+        const kardex_nuevo = { id, date, specification, movement_reason, employee}
         commit('addKardex', kardex_nuevo)
         return [id, 'Ok']
     } catch (err) {
@@ -65,8 +81,8 @@ export const updateKardex = async({commit}, form) => {
         const idKardex = form[0]
         const kardex = form[1]
         const {data} = await foodplaceApi.put(`/kardex/${idKardex}`, kardex)
-        const { id, date, movement_type, employee, warehouse } = data['kardex-actualizado']
-        const kardex_modificado = { id, date, movement_type, employee, warehouse }
+        const { id, date, specification, movement_reason, employee } = data['kardex-actualizado']
+        const kardex_modificado = { id, date, specification, movement_reason, employee }
         commit('updateKardex', kardex_modificado)
         return [id, 'Ok']
     } catch (err) {

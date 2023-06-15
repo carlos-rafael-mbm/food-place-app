@@ -56,8 +56,8 @@ export const loadBranchWarehousesDetailOutput = async(_, id) => {
 export const createBranch = async ({commit}, form) => {
     try {
         const {data} = await foodplaceApi.post('/branches', form)
-        const { id, name, address, state } = data['sucursal-creada']
-        const sucursal_nueva = { id, name, address, state }
+        const { id, name, address, type, state } = data['sucursal-creada']
+        const sucursal_nueva = { id, name, address, type, state }
         commit('addBranch', sucursal_nueva)
         return [id, 'Ok']
     } catch (err) {
@@ -86,8 +86,8 @@ export const updateBranch = async({commit}, form) => {
         const idSucursal = form[0]
         const sucursal = form[1]
         const {data} = await foodplaceApi.put(`/branches/${idSucursal}`, sucursal)
-        const { id, name, address, state } = data['sucursal-actualizada']
-        const sucursal_modificada = { id, name, address, state }
+        const { id, name, address, type, state } = data['sucursal-actualizada']
+        const sucursal_modificada = { id, name, address, type, state }
         commit('updateBranch', sucursal_modificada)
         return [id, 'Ok']
     } catch (err) {
