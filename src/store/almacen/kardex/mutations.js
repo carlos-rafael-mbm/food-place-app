@@ -10,6 +10,10 @@ export const setKardexesDetail = (state, kardexes_detail) => {
     state.kardexes_detail = [...kardexes_detail]
 }
 
+export const setMovementReasons = (state, movement_reasons) => {
+    state.movement_reasons = [...movement_reasons]
+}
+
 export const addKardex = (state, kardex) => {
     state.kardexes = [...state.kardexes, kardex]
 }

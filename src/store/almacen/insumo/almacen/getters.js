@@ -10,6 +10,12 @@ export const getActiveBranches = (state) => () => {
     return [...branches]
 }
 
+export const getActiveBranchesDestiny = (state) => (idOrigin = '') => {
+    const branches = [...state.branches.filter(p => p.state == 1 && p.id != idOrigin)]
+    if (!branches) return
+    return [...branches]
+}
+
 export const getSuppliesToEntry = (state) => {
     const branch_warehouse_detail = [...state.branch_warehouses_detail]
     const supplies_entry = []
