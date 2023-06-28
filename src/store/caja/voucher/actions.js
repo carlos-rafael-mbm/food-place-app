@@ -57,6 +57,31 @@ export const loadAllVouchers = async({commit}) => {
     }
 }
 
+export const loadAllCreditNotes = async({commit}) => {
+    const creditNotes = []
+    try {
+        const { data } = await foodplaceApi.get('/credit_notes')
+        for (const entry of Array.prototype.entries.call(data)) {
+            creditNotes.push({...entry[1], orden: entry[0] + 1})
+        }
+        if (creditNotes) {
+            creditNotes.sort((a, b) => b.id - a.id)
+        }
+        commit('setAllCreditNotes', creditNotes)
+    } catch (error) {
+        commit('setAllCreditNotes', creditNotes)
+    }
+}
+
+export const loadCdrById = async(_, id) => {
+    try {
+        const { data } = await foodplaceApi.get(`/vouchers/search-cdr/${id}`)
+        return data
+    } catch (error) {
+        return null
+    }
+}
+
 export const loadVoucherDetailsByVoucher = async({commit}, id) => {
     let voucher_details = []
     try {
@@ -81,6 +106,23 @@ export const createVoucher = async ({commit}, form) => {
         commit('addVoucher', comprobante_nuevo)
         return [id, 'Ok']
     } catch (err) {
+        if (err.response) {
+            return [0, err.response.data.message]
+        }
+    }
+}
+
+export const createCreditNote = async ({commit}, form) => {
+    try {
+        console.log(form)
+        const {data} = await foodplaceApi.post('/credit_notes', form)
+        console.log(data)
+        const { id, doc_type, serie, correlative, issuance_time, affected_doc_type, affected_doc_number, reason_code, reason_desc, voucher } = data['nota-de-credito-creada']
+        const comprobante_nuevo = { id, doc_type, serie, correlative, issuance_time, affected_doc_type, affected_doc_number, reason_code, reason_desc, voucher }
+        commit('addCreditNote', comprobante_nuevo)
+        return [id, 'Ok']
+    } catch (err) {
+        console.log(err)
         if (err.response) {
             return [0, err.response.data.message]
         }

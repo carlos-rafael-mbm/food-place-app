@@ -342,6 +342,12 @@ export default {
             apellidosCliente: '',
             correlativo: '',
             habilitarSunat: false,
+            ublVersion: '',
+            tipoOpeSunat: '',
+            serieBoleta: '',
+            serieFactura: '',
+            codigoBoleta: '',
+            codigoFactura: '',
             montoIgv: 0,
             rucRestaurante: '',
             razonSocial: '',
@@ -352,7 +358,8 @@ export default {
                 cash_register: null,
                 employee: null
             },
-            payment_method: null
+            payment_method: null,
+            cdrZip: ''
         }
     },
     watch: {
@@ -780,10 +787,10 @@ export default {
             const total = this.getTotal
             const totalNoIGV = this.getTotalNoIGV
             const comprobante = {}
-            comprobante.ublVersion = '2.1'
-            comprobante.tipoOperacion = '0101' // SUNAT: Venta interna
-            comprobante.tipoDoc = this.tipoDoc <= 2 ? '03' : '01' // SUNAT: Boleta (3), Factura (1)
-            comprobante.serie = this.tipoDoc <= 2 ? 'B001' : 'F001'
+            comprobante.ublVersion = this.ublVersion
+            comprobante.tipoOperacion = this.tipoOpeSunat // SUNAT: Venta interna
+            comprobante.tipoDoc = this.tipoDoc <= 2 ? this.codigoBoleta : this.codigoFactura // SUNAT: Boleta (3), Factura (1)
+            comprobante.serie = this.tipoDoc <= 2 ? this.serieBoleta : this.serieFactura
             comprobante.correlativo = await this.getMaxCorrelative(this.tipoDoc <= 2 ? 'B' : 'F')
             comprobante.fechaEmision = fechaActual.toISOString().slice(0, -5) + '-05:00'
             comprobante.formaPago = {}
@@ -795,6 +802,10 @@ export default {
                 comprobante.client.tipoDoc = this.docCliente.length == 8 ? '1' : '6' // SUNAT: Cod de tipo de documento 1: DNI, 6: RUC
                 comprobante.client.numDoc = this.docCliente
                 comprobante.client.rznSocial = this.nombreCliente
+            } else {
+                comprobante.client.tipoDoc = '0'
+                comprobante.client.numDoc = '--------'
+                comprobante.client.rznSocial = 'SIN NOMBRE'
             }
             comprobante.company = {}
             comprobante.company.ruc = this.rucRestaurante
@@ -802,9 +813,9 @@ export default {
             comprobante.company.nombreComercial = this.razonSocial
             comprobante.company.address = {}
             comprobante.company.address.direccion = this.direccion
-            comprobante.company.address.provincia = 'Cusco'
-            comprobante.company.address.departamento = 'Cusco'
-            comprobante.company.address.distrito = 'Cusco'
+            // comprobante.company.address.provincia = 'Cusco'
+            // comprobante.company.address.departamento = 'Cusco'
+            // comprobante.company.address.distrito = 'Cusco'
             comprobante.mtoOperGravadas = parseFloat(totalNoIGV.toFixed(2))
             comprobante.mtoIGV = parseFloat((totalNoIGV * this.montoIgv / 100).toFixed(2))
             comprobante.valorVenta = parseFloat(totalNoIGV.toFixed(2))
@@ -841,8 +852,8 @@ export default {
             try {
                 // Revisar envio de datos a SUNAT (error por certificado digital)
                 const {data} = await facturacionApi.post('/invoice/send', comprobante)
-                
                 if (data.sunatResponse.success) {
+                    this.cdrZip = data.sunatResponse.cdrZip
                     const rpta = await facturacionApi.post('/invoice/pdf', comprobante, {
                         responseType: 'blob',
                         headers: {
@@ -864,18 +875,21 @@ export default {
             }
         },
         async pagarPedido() {
-            // 1. Guardar datos de cliente
-            const formCliente = new FormData()
-            formCliente.append('doc_type', this.docCliente.length == 8 ? '1' : '2')
-            formCliente.append('doc_number', this.docCliente)
-            formCliente.append('recurrent', 0)
-            if (this.docCliente.length == 8) {
-                formCliente.append('name', this.nombresCliente)
-                formCliente.append('surname', this.apellidosCliente)
-            } else {
-                formCliente.append('business_name', this.nombreCliente)
+            let client = null
+            if (this.tipoDoc >= 2) {
+                // 1. Guardar datos de cliente
+                const formCliente = new FormData()
+                formCliente.append('doc_type', this.docCliente.length == 8 ? '1' : '2')
+                formCliente.append('doc_number', this.docCliente)
+                formCliente.append('recurrent', 0)
+                if (this.docCliente.length == 8) {
+                    formCliente.append('name', this.nombresCliente)
+                    formCliente.append('surname', this.apellidosCliente)
+                } else {
+                    formCliente.append('business_name', this.nombreCliente)
+                }
+                client = await this.createClientByPayment(formCliente)
             }
-            const client = await this.createClientByPayment(formCliente)
             // 2. Agregar registros a Voucher y Voucher_Detail
             const formVoucher = new FormData()
             formVoucher.append('doc_type', this.tipoDoc <= 2 ? '03' : '01')
@@ -901,6 +915,9 @@ export default {
             }
             formVoucher.append('payment_method_id', this.payment_method.id)
             formVoucher.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
+            if (this.cdrZip) {
+                formVoucher.append('cdr_file', this.cdrZip)
+            }
             const resVoucher = await this.createVoucher(formVoucher)
             if (resVoucher[0] != 0) {
                 for (const item of this.listOrderDetailsGroup) {
@@ -994,6 +1011,18 @@ export default {
         this.montoIgv = parameterFound ? parseFloat(parameterFound.value) : 0
         parameterFound = this.parameters.find(p => p.parameter_code == 1010 && p.item_code == 1013)
         this.habilitarSunat = parameterFound ? (parameterFound.value == '1' ? true : false) : false
+        parameterFound = this.parameters.find(p => p.parameter_code == 1040 && p.item_code == 1041)
+        this.ublVersion = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1050 && p.item_code == 1051)
+        this.tipoOpeSunat = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1060 && p.item_code == 1061)
+        this.serieBoleta = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1060 && p.item_code == 1062)
+        this.serieFactura = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1071)
+        this.codigoBoleta = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1072)
+        this.codigoFactura = parameterFound ? parameterFound.value : ''
         await this.clearOrderComplete()
         this.cashRegisterAssignment = await this.loadLastCashRegisterAssignmentByEmployee(this.getUser.employee.id)
         this.isLoading = false
