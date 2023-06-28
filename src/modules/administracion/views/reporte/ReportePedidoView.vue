@@ -104,9 +104,16 @@
                         empty-message="No hay datos de pedidos en la fecha indicada">
                         <template #item-action="item">
                             <div class="action-wrapper">
-                                <v-btn icon="mdi-eye" class="text-center me-2" color="green" size="x-small" @click="cargarDetalle(item)"></v-btn>
-                                <v-btn icon="mdi-printer" class="text-center me-2" color="blue" size="x-small" @click="generarComprobanteManual(item.id)"></v-btn>
-                                <v-btn v-if="item.state.toUpperCase() == 'ACTIVO'" icon="mdi-trash-can-outline" class="text-center" color="#E75D48" size="x-small" @click="anularComprobante(item.id)"></v-btn>
+                                <v-btn icon="mdi-eye" class="text-center me-2" color="green" size="x-small" style="font-size: 1.2em;" @click="cargarDetalle(item)"></v-btn>
+                                <v-btn icon class="text-center me-2" color="blue" size="x-small" @click="generarComprobante(item.id)">
+                                    <v-avatar size="x-small"><span class="text-blue py-1" style="font-size: 0.75em; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-weight: 800; background-color: white">PDF</span></v-avatar>
+                                </v-btn>
+                                <v-btn v-if="item.state.toUpperCase() == 'ACTIVO'" icon class="text-center me-2" color="orange" size="x-small" @click="generarCdrSunat(item.id)">
+                                    <v-avatar size="x-small"><span class="text-orange py-1" style="font-size: 0.75em; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-weight: 800; background-color: white">CDR</span></v-avatar>
+                                </v-btn>
+                                <v-btn v-if="item.state.toUpperCase() == 'ACTIVO'" icon class="text-center" color="#E75D48" size="x-small" @click="anularComprobante(item.id)">
+                                    <v-avatar size="x-small"><span class="py-1" style="font-size: 0.75em; color: #E75D48; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-weight: 800; background-color: white">+NC</span></v-avatar>
+                                </v-btn>
                             </div>
                         </template>
                     </easy-data-table>
@@ -169,6 +176,9 @@ import { mapActions, mapState } from 'vuex'
 import Swal from "sweetalert2"
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import readNumbersAsText from '@/helpers/readNumbersAsText';
+import { facturacionApi } from '@/api/foodplaceApi'
+import JSZip from 'jszip';
 
 export default {
     components: {
@@ -190,19 +200,27 @@ export default {
             start_date: this.getFechaActual(),
             end_date: this.getFechaActual(),
             dialog: false,
+            habilitarSunat: false,
+            ublVersion: '',
+            tipoOpeSunat: '',
+            serieNotaCreditoBoleta: '',
+            serieNotaCreditoFactura: '',
+            codigoBoleta: '',
+            codigoFactura: '',
+            codigoNotaCredito: '',
             rucRestaurante: '',
             razonSocial: '',
             direccion: ''
         }
     },
     computed: {
-        ...mapState('comprobante', ['vouchers', 'voucher_details']),
+        ...mapState('comprobante', ['vouchers', 'voucher_details', 'credit_notes_all']),
         ...mapState('parametro', ['parameters'])
     },
     methods: {
         ...mapActions('parametro', ['loadParameters']),
         ...mapActions('pedido', ['revertOrder']),
-        ...mapActions('comprobante', ['loadVouchersReport', 'loadVouchersById', 'loadVoucherDetailsByVoucher', 'updateVoucher']),
+        ...mapActions('comprobante', ['loadVouchersReport', 'loadVouchersById', 'loadVoucherDetailsByVoucher', 'updateVoucher', 'loadCdrById', 'loadAllCreditNotes', 'createCreditNote']),
         getFechaActual() {
             const date = new Date(Date.now())
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
@@ -212,6 +230,18 @@ export default {
             const date = new Date(fecha)
             date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
             return date.toJSON().slice(0, 10)
+        },
+        async getMaxCorrelative(voucherType) {
+            let maxValue = 0
+            await this.loadAllCreditNotes()
+            const creditNotes = [...this.credit_notes_all.filter(v => v.serie && v.serie === voucherType)]
+            if (creditNotes && creditNotes.length > 0) {
+                maxValue = Math.max(...creditNotes.map(x => parseInt(x.correlative)))
+                maxValue++
+            } else {
+                maxValue = 1
+            }
+            return maxValue.toString().padStart(6, '0')
         },
         async buscarPedidos() {
             this.$refs.form.validate()
@@ -223,7 +253,9 @@ export default {
             if (this.vouchers && this.vouchers.length > 0) {
                 this.vouchersFiltered = [...this.vouchers.filter(x => {
                     const startDate = new Date(Date.parse(this.start_date))
+                    startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset())
                     const endDate = new Date(Date.parse(this.end_date))
+                    endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset())
                     const orderDate = new Date(Date.parse(x.issuance_time))
                     if (orderDate >= startDate && orderDate < endDate.setDate(endDate.getDate() + 1))
                         return true
@@ -370,9 +402,113 @@ export default {
                 })]
             }
         },
+        download(path, filename) {
+            // Create a new link
+            const anchor = document.createElement('a')
+            anchor.href = path
+            anchor.download = filename
+            // Append to the DOM
+            document.body.appendChild(anchor)
+            // Trigger `click` event
+            anchor.click()
+            // Remove element from DOM
+            document.body.removeChild(anchor)
+        },
+        async generarComprobanteSunat(id) {
+            try {
+                const tzoffset = (new Date()).getTimezoneOffset() * 60000 //offset in milliseconds
+                const voucher = await this.loadVouchersById(id)
+                if (voucher.state == 0) {
+                    this.generarComprobanteManual(id)
+                    return
+                }
+                const comprobante = {}
+                comprobante.ublVersion = this.ublVersion
+                comprobante.tipoOperacion = this.tipoOpeSunat // SUNAT: Venta interna
+                comprobante.tipoDoc = voucher.doc_type
+                comprobante.serie = voucher.serie
+                comprobante.correlativo = voucher.correlative
+                comprobante.fechaEmision = new Date(Date.parse(voucher.issuance_time) - tzoffset).toISOString().slice(0, -5) + '-05:00'
+                comprobante.formaPago = {}
+                comprobante.formaPago.moneda = 'PEN'
+                comprobante.formaPago.tipo = 'Contado'
+                comprobante.tipoMoneda = 'PEN'
+                comprobante.client = {}
+                if (voucher.client) {
+                    comprobante.client.tipoDoc = voucher.client.doc_type === '1' ? '1' : '6' // SUNAT: Cod de tipo de documento 1: DNI, 6: RUC
+                    comprobante.client.numDoc = voucher.client.doc_number
+                    comprobante.client.rznSocial = voucher.client.doc_type === '1' ? `${voucher.client.name} ${voucher.client.surname}` : voucher.client.business_name
+                } else {
+                    comprobante.client.tipoDoc = '0'
+                    comprobante.client.numDoc = '--------'
+                    comprobante.client.rznSocial = 'SIN NOMBRE'
+                }
+                comprobante.company = {}
+                comprobante.company.ruc = this.rucRestaurante
+                comprobante.company.razonSocial = this.razonSocial
+                comprobante.company.nombreComercial = this.razonSocial
+                comprobante.company.address = {}
+                comprobante.company.address.direccion = this.direccion
+                comprobante.company.address.provincia = 'Cusco'
+                comprobante.company.address.departamento = 'Cusco'
+                comprobante.company.address.distrito = 'Cusco'
+                comprobante.mtoOperGravadas = parseFloat(voucher.total_no_tax.toFixed(2))
+                comprobante.mtoIGV = parseFloat(voucher.tax_amount.toFixed(2))
+                comprobante.valorVenta = parseFloat(voucher.total_no_tax.toFixed(2))
+                comprobante.totalImpuestos = parseFloat(voucher.tax_amount.toFixed(2))
+                comprobante.subTotal = parseFloat(voucher.total_tax.toFixed(2))
+                comprobante.mtoImpVenta = parseFloat(voucher.total_tax.toFixed(2))
+                // Construir detalle
+                await this.loadVoucherDetailsByVoucher(id)
+                comprobante.details = []
+                this.voucher_details.map(x => {
+                    const detalle = {}
+                    detalle.unidad = 'NIU'
+                    detalle.descripcion = x.item_menu
+                    detalle.cantidad = parseFloat(x.amount)
+                    detalle.mtoValorUnitario = parseFloat(x.price_no_tax.toFixed(2))
+                    detalle.mtoValorVenta = parseFloat(x.subtotal.toFixed(2))
+                    detalle.mtoBaseIgv = parseFloat(x.subtotal.toFixed(2))
+                    detalle.porcentajeIgv = parseFloat(voucher.tax_value)
+                    detalle.igv = parseFloat((x.subtotal * (parseFloat(voucher.tax_value) / 100)).toFixed(2))
+                    detalle.tipAfeIgv = 10
+                    detalle.totalImpuestos = parseFloat((x.subtotal * (parseFloat(voucher.tax_value) / 100)).toFixed(2))
+                    detalle.mtoPrecioUnitario = parseFloat(x.price_tax)
+                    comprobante.details.push(detalle)
+                })
+                comprobante.legends = []
+                const legend = {}
+                legend.code = '1000'
+                legend.value = readNumbersAsText(comprobante.mtoImpVenta, {
+                    plural: "SOLES",
+                    singular: "SOL",
+                    centPlural: "CÉNTIMOS",
+                    centSingular: "CÉNTIMO"
+                })
+                comprobante.legends.push(legend)
+                const rpta = await facturacionApi.post('/invoice/pdf', comprobante, {
+                    responseType: 'blob',
+                    headers: {
+                        'Accept': 'application/pdf'
+                    }
+                })
+                const url = URL.createObjectURL(rpta.data)
+                this.download(url, comprobante.tipoDoc == '03' ? `Boleta_${comprobante.correlativo}.pdf` : `Factura_${comprobante.correlativo}.pdf`)
+                URL.revokeObjectURL(url)
+            } catch (error) {
+                Swal.fire('Error SUNAT', 'Error al realizar operaciones con SUNAT. No se generó el pdf', 'error')
+                return false
+            }
+        },
+        async generarComprobante(id) {
+            if (this.habilitarSunat) {
+                await this.generarComprobanteSunat(id)
+            } else {
+                await this.generarComprobanteManual(id)
+            }
+        },
         async generarComprobanteManual(id) {
             try {
-                debugger
                 const comprobante = await this.loadVouchersById(id)
                 // Importar fuentes nuevas
                 require('@/assets/fonts/DroidSans-normal')
@@ -494,6 +630,14 @@ export default {
                 pdf.text('S/ ' + parseFloat(comprobante.total_tax).toFixed(2), 195, tabla.finalY + 21, { align: 'right' })
                 pdf.line(176, tabla.finalY + 23, 196, tabla.finalY + 23)
                 pdf.text('Contado', 31, tabla.finalY + 27)
+                if (comprobante.state == 0) {
+                    pdf.saveGraphicsState()
+                    pdf.setGState(new pdf.GState({opacity: 0.3}))
+                    pdf.setTextColor('red')
+                    pdf.setFontSize(150)
+                    pdf.text('Anulado', 36, 160, null, 45)
+                    pdf.restoreGraphicsState()
+                }
                 // Descargar PDF
                 pdf.save(comprobante.doc_type == "03" ? `Boleta_${correlativo}.pdf` : `Factura_${correlativo}.pdf`)
                 // Swal.fire('Generado', 'PDF manual generado', 'success')
@@ -510,31 +654,209 @@ export default {
                 return false
             }
         },
-        async anularComprobante(id) {
-            let res = []
-            res = await this.revertOrder(id)
-            if (res.rpta != 0) {
-                const formVoucher = new FormData()
-                formVoucher.append('state', 0)
-                res = await this.updateVoucher([id, formVoucher])
-                if (res[0] != 0) {
-                    await this.loadVouchersReport(this.year)
-                    if (this.vouchers && this.vouchers.length > 0) {
-                        this.vouchersFiltered = [...this.vouchers.filter(x => {
-                            const startDate = new Date(Date.parse(this.start_date))
-                            const endDate = new Date(Date.parse(this.end_date))
-                            const orderDate = new Date(Date.parse(x.issuance_time))
-                            if (orderDate >= startDate && orderDate < endDate.setDate(endDate.getDate() + 1))
-                                return true
-                            else return false
-                        })]
-                    }
-                    Swal.fire('Éxito', 'Se anuló el comprobante', 'success')
+        async generarCdrSunat(id) {
+            try {
+                const cdr = await this.loadCdrById(id)
+                if (cdr) {
+                    const zip = new JSZip()
+                    zip.loadAsync(cdr, {base64: true})
+                        .then((zip) => {
+                            let xmlFile = null;
+                            // Buscar un archivo con extensión XML dentro del ZIP
+                            zip.forEach(function (relativePath, file) {
+                                if (file.name.toLowerCase().endsWith('.xml')) {
+                                    xmlFile = file
+                                }
+                            })
+                            if (xmlFile) {
+                                xmlFile.async('string').then((xmlContent) => {
+                                    // Realizar acciones con el contenido del archivo XML
+                                    // Crear un elemento <a> para generar el enlace de descarga
+                                    const a = document.createElement('a');
+                                    a.href = URL.createObjectURL(new Blob([xmlContent], { type: 'text/xml' }));
+                                    a.download = xmlFile.name;
+                                    // Simular un clic en el enlace para iniciar la descarga
+                                    a.click();
+                                })
+                            } else {
+                                Swal.fire('Error', 'No se encontró un archivo XML en el ZIP', 'error')
+                            }
+                        })
                 } else {
-                    Swal.fire('Error', 'Se anuló el pedido, pero no se extornó el comprobante' + res.rpta, 'error')
+                    Swal.fire('Error', 'No existe cdr para este comprobante', 'error')
                 }
-            } else {
-                Swal.fire('Error', 'Error no se pudo anular el pedido. ' + res.message, 'error')
+            } catch (error) {
+                Swal.fire('Error', 'Error al obtener CDR', 'error')
+            }
+        },
+        async anularComprobante(id) {
+            const {isConfirmed} = await Swal.fire({
+                title: 'ANULAR PAGO',
+                text: 'Se realizará la anulación del pago realizado',
+                showDenyButton: true,
+                denyButtonColor: '#E75D48',
+                denyButtonText: ' <i class="fa fa-thumbs-down"></i>  No, aún no',
+                confirmButtonColor: '#679A50',
+                confirmButtonText: '<i class="fa fa-thumbs-up"></i>  Sí, cobremos!',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                },
+                background: '#F7F5B2'
+            })
+            if (isConfirmed) {
+                new Swal({
+                    title: 'Espere por favor',
+                    allowOutsideClick: false
+                })
+                Swal.showLoading()
+                if (this.habilitarSunat) {
+                    const generated = await this.generarNotaCreditoSunat(id)
+                    if (!generated) {
+                        return
+                    }
+                }
+                let res = []
+                res = await this.revertOrder(id)
+                if (res.rpta != 0) {
+                    const formVoucher = new FormData()
+                    formVoucher.append('state', 0)
+                    res = await this.updateVoucher([id, formVoucher])
+                    if (res[0] != 0) {
+                        await this.loadVouchersReport(this.year)
+                        if (this.vouchers && this.vouchers.length > 0) {
+                            this.vouchersFiltered = [...this.vouchers.filter(x => {
+                                const startDate = new Date(Date.parse(this.start_date))
+                                startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset())
+                                const endDate = new Date(Date.parse(this.end_date))
+                                endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset())
+                                const orderDate = new Date(Date.parse(x.issuance_time))
+                                if (orderDate >= startDate && orderDate < endDate.setDate(endDate.getDate() + 1))
+                                    return true
+                                else return false
+                            })]
+                        }
+                        Swal.fire('Éxito', 'Se anuló el comprobante', 'success')
+                    } else {
+                        Swal.fire('Error', 'Se anuló el pedido, pero no se extornó el comprobante' + res.rpta, 'error')
+                    }
+                } else {
+                    Swal.fire('Error', 'Error no se pudo anular el pedido. ' + res.message, 'error')
+                }
+            }
+        },
+        async generarNotaCreditoSunat(id) {
+            try {
+                const tzoffset = (new Date()).getTimezoneOffset() * 60000 //offset in milliseconds
+                const fechaActual = new Date(Date.now() - tzoffset)
+                const voucher = await this.loadVouchersById(id)
+                const comprobante = {}
+                comprobante.ublVersion = this.ublVersion
+                comprobante.tipoDoc = this.codigoNotaCredito
+                comprobante.serie = voucher.doc_type === this.codigoBoleta ? this.serieNotaCreditoBoleta : this.serieNotaCreditoFactura
+                comprobante.correlativo = await this.getMaxCorrelative(comprobante.serie)
+                comprobante.fechaEmision = fechaActual.toISOString().slice(0, -5) + '-05:00'
+                comprobante.tipDocAfectado = voucher.doc_type
+                comprobante.numDocfectado = `${voucher.serie}-${voucher.correlative}`
+                comprobante.codMotivo = '01'
+                comprobante.desMotivo = 'ANULACION DE LA OPERACION'
+                comprobante.tipoMoneda = 'PEN'
+                comprobante.client = {}
+                if (voucher.client) {
+                    comprobante.client.tipoDoc = voucher.client.doc_type === '1' ? '1' : '6' // SUNAT: Cod de tipo de documento 1: DNI, 6: RUC
+                    comprobante.client.numDoc = voucher.client.doc_number
+                    comprobante.client.rznSocial = voucher.client.doc_type === '1' ? `${voucher.client.name} ${voucher.client.surname}` : voucher.client.business_name
+                } else {
+                    comprobante.client.tipoDoc = '0'
+                    comprobante.client.numDoc = '--------'
+                    comprobante.client.rznSocial = 'SIN NOMBRE'
+                }
+                comprobante.company = {}
+                comprobante.company.ruc = this.rucRestaurante
+                comprobante.company.razonSocial = this.razonSocial
+                comprobante.company.nombreComercial = this.razonSocial
+                comprobante.company.address = {}
+                comprobante.company.address.direccion = this.direccion
+                // comprobante.company.address.provincia = 'Cusco'
+                // comprobante.company.address.departamento = 'Cusco'
+                // comprobante.company.address.distrito = 'Cusco'
+                comprobante.mtoOperGravadas = parseFloat(voucher.total_no_tax.toFixed(2))
+                comprobante.mtoIGV = parseFloat(voucher.tax_amount.toFixed(2))
+                comprobante.totalImpuestos = parseFloat(voucher.tax_amount.toFixed(2))
+                comprobante.mtoImpVenta = parseFloat(voucher.total_tax.toFixed(2))
+                // Construir detalle
+                await this.loadVoucherDetailsByVoucher(id)
+                comprobante.details = []
+                this.voucher_details.map(x => {
+                    const detalle = {}
+                    detalle.unidad = 'NIU'
+                    detalle.cantidad = parseFloat(x.amount)
+                    detalle.descripcion = x.item_menu
+                    detalle.mtoBaseIgv = parseFloat(x.subtotal.toFixed(2))
+                    detalle.porcentajeIgv = parseFloat(voucher.tax_value)
+                    detalle.igv = parseFloat((x.subtotal * (parseFloat(voucher.tax_value) / 100)).toFixed(2))
+                    detalle.tipAfeIgv = 10
+                    detalle.totalImpuestos = parseFloat((x.subtotal * (parseFloat(voucher.tax_value) / 100)).toFixed(2))
+                    detalle.mtoValorVenta = parseFloat(x.subtotal.toFixed(2))
+                    detalle.mtoValorUnitario = parseFloat(x.price_no_tax.toFixed(2))
+                    detalle.mtoPrecioUnitario = parseFloat(x.price_tax)
+                    comprobante.details.push(detalle)
+                })
+                comprobante.legends = []
+                const legend = {}
+                legend.code = '1000'
+                legend.value = readNumbersAsText(comprobante.mtoImpVenta, {
+                    plural: "SOLES",
+                    singular: "SOL",
+                    centPlural: "CÉNTIMOS",
+                    centSingular: "CÉNTIMO"
+                })
+                comprobante.legends.push(legend)
+                // Revisar envio de datos a SUNAT (error por certificado digital)
+                const {data} = await facturacionApi.post('/note/send', comprobante)
+                if (data.sunatResponse.success) {
+                    const cdrZip = data.sunatResponse.cdrZip
+                    const rpta = await facturacionApi.post('/note/pdf', comprobante, {
+                        responseType: 'blob',
+                        headers: {
+                            'Accept': 'application/pdf'
+                        }
+                    })
+                    const url = URL.createObjectURL(rpta.data)
+                    this.download(url, `Nota_Credito_${comprobante.correlativo}.pdf`)
+                    URL.revokeObjectURL(url)
+                    try {
+                        const formCreditNote = new FormData()
+                        formCreditNote.append('doc_type', comprobante.tipoDoc)
+                        formCreditNote.append('serie', comprobante.serie)
+                        formCreditNote.append('correlative', comprobante.correlativo)
+                        formCreditNote.append('affected_doc_type', comprobante.tipDocAfectado)
+                        formCreditNote.append('affected_doc_number', comprobante.numDocfectado)
+                        formCreditNote.append('reason_code', comprobante.codMotivo)
+                        formCreditNote.append('reason_desc', comprobante.desMotivo)
+                        formCreditNote.append('cdr_file', cdrZip)
+                        formCreditNote.append('voucher_id', id)
+                        await this.createCreditNote(formCreditNote)
+                    } catch (error) {
+                        Swal.fire({
+                            position: 'top-end',
+                            text: 'Error al guardar nota de crédito',
+                            color: 'white',
+                            background: 'red',
+                            showConfirmButton: false,
+                            timer: 1200
+                        })
+                    }
+                    return true
+                } else {
+                    Swal.fire('Error SUNAT', `${data.sunatResponse.error.code} ${data.sunatResponse.error.message}`, 'error')
+                    return false
+                }
+            } catch (error) {
+                Swal.fire('Error SUNAT', 'Error al realizar operaciones con SUNAT. No se procesó la operación', 'error')
+                return false
             }
         }
     },
@@ -547,6 +869,22 @@ export default {
         this.rucRestaurante = parameterFound ? parameterFound.value : ''
         parameterFound = this.parameters.find(p => p.parameter_code == 1000 && p.item_code == 1003)
         this.direccion = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1010 && p.item_code == 1013)
+        this.habilitarSunat = parameterFound ? (parameterFound.value == '1' ? true : false) : false
+        parameterFound = this.parameters.find(p => p.parameter_code == 1040 && p.item_code == 1041)
+        this.ublVersion = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1050 && p.item_code == 1051)
+        this.tipoOpeSunat = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1060 && p.item_code == 1063)
+        this.serieNotaCreditoBoleta = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1060 && p.item_code == 1064)
+        this.serieNotaCreditoFactura = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1071)
+        this.codigoBoleta = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1072)
+        this.codigoFactura = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1073)
+        this.codigoNotaCredito = parameterFound ? parameterFound.value : ''
         this.headers = [
             { text: "Serie", value: "serie", sortable: true, width: 10 },
             { text: "Correlativo", value: "correlative", sortable: true, width: 25 },
@@ -564,7 +902,9 @@ export default {
         if (this.vouchers && this.vouchers.length > 0) {
             this.vouchersFiltered = [...this.vouchers.filter(x => {
                 const startDate = new Date(Date.parse(this.start_date))
+                startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset())
                 const endDate = new Date(Date.parse(this.end_date))
+                endDate.setMinutes(endDate.getMinutes() + endDate.getTimezoneOffset())
                 const orderDate = new Date(Date.parse(x.issuance_time))
                 if (orderDate >= startDate && orderDate < endDate.setDate(endDate.getDate() + 1))
                     return true

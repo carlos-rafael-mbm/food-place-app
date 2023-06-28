@@ -2,7 +2,9 @@ import axios from "axios";
 
 export const foodplaceApi = axios.create({
     // baseURL: 'http://127.0.0.1:5000/api'
-    baseURL: 'https://carlosrmendoza.pythonanywhere.com/api'
+    // baseURL: 'https://carlosrmendoza.pythonanywhere.com/api'
+    // baseURL: 'http://18.190.98.95:80/api'
+    baseURL: 'http://ec2-3-137-174-96.us-east-2.compute.amazonaws.com/api'
 })
 
 foodplaceApi.interceptors.request.use((config) => {
@@ -22,7 +24,7 @@ export const facturacionApi = axios.create({
 
 facturacionApi.interceptors.request.use((config) => {
     config.headers = {
-        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2NzQyNTUyNDgsImV4cCI6NDgyNzg1NTI0OCwidXNlcm5hbWUiOiJjYXJsb3NybWVuZG96YSIsImNvbXBhbnkiOiIyMjEyMzQ1Njc4OSJ9.NAsEKslkhTnYRme6x2gSsMqLqlEMFudjxcxpT3SeLSGod6HidvpItY5TCXHWHwlmb-1mMS-AjrJ42ZUyJQqeBPvi1k6gawd3xH16oqE_G2glq2n2hhNJ9--KzVsg2QawQ331MQ9H8-99_P0fwQF0ILoivH1m9oi4-9MM_sw7LXprLjPghxH3DfcAPdg87nWt5wZE5X3LtUopjEaqOCep27VUAw7FhfwxGilwJo_OYJTL2pTK6PQ0gc1Zz1IS52Dr4kxKSLkRA54ro0y4BYdwcqzbS_r6o-vq7B0FpHdKMXASd0lQ416V-K-LSg8E3Ga7U89Xf_njBGwdHE0HQhfUy-mrvoi6lBX7dou88_DveWojmPWdqpkBA3BwmULWZLlwL3qXwnuuJKn7QWbeX1iVJ42tZ_3Ro1_ZmrfHd_AQeVqVvx5WhIA-5GJJrH-FRwRzOpQeSyW1d7ZtVBkiGTQfc77Km-BWo2d-NZlQWs_LfFdE2u9Fh4WLIeRtSV_4_C6QB6zWTVTKNZZX49ilplXLzD8VHV9A6wv06NtYQEg3BE_7waMi7474jPI6v3kdWINjVHylUnslSA-A1pj26iNTsKCqFv7Fp614jpzGCARTsZFucXZON3ZYY1o6Vt1sCYh7ngBLaZfYmOCVMYQpKJV87WCYHn0_LUoFlQWDABl9Wdw'
+        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2ODY3MTY2OTksImV4cCI6NDg0MDMxNjY5OSwidXNlcm5hbWUiOiJjYXJsb3NybWVuZG96YSIsImNvbXBhbnkiOiIyMzEyMzQ1Njc4OSJ9.S3hx0GdKTWJNmT7ehi9ZbyQ16zeZkVh-wfIP6RL01V9a9fCCse0wHx9wTdkCvbwaaYzZ5bNsPHZM3EaJ3K7bsCTlPsGkLUD8u8aOZAVnvW0Ey-AKCqEacJjITF5fzzROJlZcTzFZUeCJxM5kcWvJSZBLyXMyFTu4SQg5aVI_6xr6BO05serC9yhU7-fcbDlqhmKDsFhb3MIir1BG3dma6tWD8MQ6BP1lGTy4a6O5Qpeuv_vKXVVvJixGGbKZgsGsfdtW0eEk_D1mvLKQ4LPelJUswUVCqHShLx9ipf6azAQ3DyUtFO7kUO344sqUtSqpkq9z6yASXIt3Chl9vJA9Wd79_kB_t9gYkuy0H5NqNoAWA-sRRBDQzRQIz6CVVfrSi8yLXSF9H05AwkQcFxxc347STpNrE0GaAgCX02Zm07C3eR7qFvGJ_RmyTUOLr9uVl7rApFJyCfZjB2xkDMD5kAQeJh59XF69XhmLjNQRypikRflJjcZBVybI37plVoIAfgFfjCPfx0alplEvtjwMpZ0gGWwROpTFSHnDLm5ltERzQhZavrXHdqSOt9M4s8x1itPU8s_XBRgnBSwOL62UgT51gpG6I5xTPDctGIgTN1T9N8P8uyeTF5-OUyZckMZpyr1UEGQsu2Gu1gc56Gc7N1l66s4tl1fA_xkBUyUS8t0'
     }
     return config
 })
