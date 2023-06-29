@@ -2,9 +2,9 @@ import axios from "axios";
 
 export const foodplaceApi = axios.create({
     // baseURL: 'http://127.0.0.1:5000/api'
-    // baseURL: 'https://carlosrmendoza.pythonanywhere.com/api'
+    baseURL: 'https://carlosrmendoza.pythonanywhere.com/api'
     // baseURL: 'http://18.190.98.95:80/api'
-    baseURL: 'http://ec2-3-137-174-96.us-east-2.compute.amazonaws.com/api'
+    // baseURL: 'http://ec2-3-137-174-96.us-east-2.compute.amazonaws.com/api'
 })
 
 foodplaceApi.interceptors.request.use((config) => {
