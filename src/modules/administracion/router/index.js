@@ -29,6 +29,12 @@ export default {
             component: () => import(/* webpackChunkName: "administracion-menu-view" */ '@/modules/administracion/views/menu/MenuView.vue')
         },
         {
+            path: '/administracion/insumos-item-menu',
+            name: 'adm-supply-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-supply-view" */ '@/modules/administracion/views/insumo_item_menu/InsumoItemMenuView.vue')
+        },
+        {
             path: '/administracion/promos',
             name: 'adm-promo-view',
             beforeEnter: [isAuthenticatedAdmin],
@@ -47,6 +53,12 @@ export default {
             component: () => import(/* webpackChunkName: "administracion-table-view" */ '@/modules/administracion/views/mesa/MesaView.vue')
         },
         {
+            path: '/administracion/metodos-pago',
+            name: 'adm-payment-method-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-payment-method-view" */ '@/modules/administracion/views/metodo_pago/MetodoPagoView.vue')
+        },
+        {
             path: '/administracion/cajas-registradoras',
             name: 'adm-cash-register-view',
             beforeEnter: [isAuthenticatedAdmin],
@@ -57,6 +69,12 @@ export default {
             name: 'adm-client-view',
             beforeEnter: [isAuthenticatedAdmin],
             component: () => import(/* webpackChunkName: "administracion-client-view" */ '@/modules/administracion/views/cliente/ClienteView.vue')
+        },
+        {
+            path: '/administracion/mapa',
+            name: 'adm-place-map-view',
+            beforeEnter: [isAuthenticatedAdmin],
+            component: () => import(/* webpackChunkName: "administracion-place-map-view" */ '@/modules/administracion/views/mapa_local/MapaLocalView.vue')
         },
         {
             path: '/administracion/empleados',

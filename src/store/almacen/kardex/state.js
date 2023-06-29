@@ -1,5 +1,6 @@
 export default () => ({
     isLoading: false,
     kardexes: [],
-    kardexes_detail: []
+    kardexes_detail: [],
+    movement_reasons: []
 })

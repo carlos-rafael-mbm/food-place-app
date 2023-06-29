@@ -5,8 +5,8 @@
         <v-layout>
             <v-app-bar color="#856826" :elevation="10">
                 <v-app-bar-nav-icon @click="drawer = !drawer" class="icon"></v-app-bar-nav-icon>
-                <v-avatar size="small" class="imagen">
-                    <img src="@/assets/logo.jpg" alt="" height="50">
+                <v-avatar rounded="0" class="imagen">
+                    <img src="@/assets/logo.png" alt="" height="45">
                 </v-avatar>
                 <v-card class="texto" flat>Módulo de Atención</v-card>
                 <v-spacer></v-spacer>
@@ -45,6 +45,22 @@
                         density="compact"
                         class="bgBrown"
                         @click="$router.push({name: 'atencion-nuevo-view'})"></v-list-item>
+                    <v-list-item
+                        prepend-icon="mdi-printer"
+                        title="Impresión de pedidos"
+                        value="impresion_pedidos"
+                        active-class="bgBrownActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgBrown"
+                        @click="$router.push({name: 'atencion-order-to-print-view'})"></v-list-item>
+                    <v-list-item
+                        prepend-icon="mdi-store"
+                        title="Distribución de mesas"
+                        value="distribucion"
+                        active-class="bgBrownActive animate__animated animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgBrown"
+                        @click="$router.push({name: 'atencion-distribucion-view'})"></v-list-item>
                 </v-list>
             </v-navigation-drawer>
 

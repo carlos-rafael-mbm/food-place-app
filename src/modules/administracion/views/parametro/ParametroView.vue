@@ -107,7 +107,7 @@ export default {
         getParameterItems() {
             let parameterItems = []
             if (this.parameterBase) {
-                const itemsByParameter = this.parameters.filter(p => p.parameter_code == this.parameterBase.parameter_code)
+                const itemsByParameter = this.parameters.filter(p => p.parameter_code == this.parameterBase.parameter_code && p.is_editable == 1)
                 const uniqueItems = [...new Map(itemsByParameter.map((item) => [item["item_code"], item])).values()]
                 parameterItems = uniqueItems.map(p => {
                     const item = {

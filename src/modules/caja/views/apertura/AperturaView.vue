@@ -134,11 +134,11 @@ export default {
         ...mapState('empleado', ['employees']),
         ...mapGetters('empleado', ['getCompleteNamesOfEmployees']),
         ...mapGetters('asignacion_cajero', ['getCashRegisterAssignmentsInOrder']),
-        ...mapGetters('login', ['getUser'])
+        ...mapGetters('login', ['getUser']),
     },
     methods: {
         ...mapActions('caja_registradora', ['loadCashRegisters']),
-        ...mapActions('empleado', ['loadEmployees']),
+        ...mapActions('empleado', ['loadCashiers']),
         ...mapActions('asignacion_cajero', ['loadCashRegisterAssignments', 'createCashRegisterAssignment', 'updateCashRegisterAssignment']),
         async limpiarCampos() {
             this.cashRegisterAssignment.id = 0
@@ -215,13 +215,13 @@ export default {
                     Swal.fire('Error', res[1], 'error')
                 }
             }
-        }
+        },
     },
     async mounted() {
         if (this.getUser.role.id == 1 || this.getUser.role.id == 9) {
             await this.loadCashRegisterAssignments()
             await this.loadCashRegisters()
-            await this.loadEmployees()
+            await this.loadCashiers()
             this.headers = [
                 { text: "Caja", value: "cash_register.name", sortable: true, width: 35 },
                 { text: "Nombre Empleado", value: "employee.name", sortable: true, width: 140 },
@@ -232,7 +232,7 @@ export default {
             ]
         } else {
             this.$router.push({name: 'home'})
-        }
+        }        
     }
 }
 </script>

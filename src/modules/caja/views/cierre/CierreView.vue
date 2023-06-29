@@ -94,6 +94,7 @@
                             <div class="control-form justify-content-center mt-2">
                                 <div class="left-control my-auto text-left">
                                     <v-label text="Ventas" class="texto"></v-label>
+                                    <v-btn class="ms-2" color="#E75D48" icon="mdi-eye" variant="text" size="medium" @click="dialog = true"></v-btn>
                                 </div>
                                 <div class="right-control text-center">
                                     <v-text-field
@@ -209,6 +210,52 @@
             </div>
         </div>
     </div>
+    <v-row justify="space-around">
+        <v-col cols="12">
+            <v-dialog id="dlgPedido" v-model="dialog" transition="dialog-bottom-transition" class="items-pedidos">
+                <v-card color="#679a50">
+                    <v-toolbar color="#679a50">
+                        <div style="margin-left: 5%"><strong>Ventas por método de pago</strong></div>
+                    </v-toolbar>
+                    <v-list class="bgDialog">
+                        <v-list-item
+                            v-for="(item, i) in paymentMethods"
+                            :key="i"
+                            :value="item"
+                            class="itemList">
+                            <template v-slot:default>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <div class="me-1">
+                                        <v-avatar v-if="item.image" size="small">
+                                            <v-img
+                                                :src="item.image"
+                                                alt="item-method"
+                                                cover>
+                                            </v-img>
+                                        </v-avatar>
+                                        <v-avatar v-else size="x-small">
+                                            <v-icon icon="mdi-cancel"></v-icon>
+                                        </v-avatar>
+                                    </div>
+                                    <div style="width: 70%">
+                                        <v-list-item-title class="tituloMenu" v-text="item.method"></v-list-item-title>
+                                    </div>
+                                    <div class="d-flex justify-content-right align-items-right" style="width: 20%">
+                                        <div class="text-right">
+                                            S/ {{ item.total }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </v-list-item>
+                    </v-list>
+                    <v-card-actions class="justify-center">
+                        <v-btn prepend-icon="mdi-close-circle" color="white" variant="outlined" @click="dialog = false">Cerrar</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </v-col>
+    </v-row>
 </template>
 
 <script>
@@ -244,6 +291,8 @@ export default {
                 real_balance: 0,
                 cash_register_assignment: null
             },
+            paymentMethods: null,
+            dialog: false,
             headers: [],
             themeColor: "#856826"
         }
@@ -271,6 +320,7 @@ export default {
         ...mapActions('movimiento_caja', ['loadCashRegisterMovements']),
         ...mapActions('balance_caja', ['loadCashierBalancingsToday', 'createCashierBalancing', 'updateCashierBalancing']),
         ...mapActions('pedido', ['loadOrdersByAssigment']),
+        ...mapActions('comprobante', ['loadVouchersByAssigment']),
         async limpiarCampos() {
             this.saldoInicial = 0
             this.ingresosCaja = 0
@@ -310,6 +360,7 @@ export default {
             this.ventas = orders.reduce((accumulator, object) => {
                 return accumulator + object.total
             }, 0)
+            this.paymentMethods = await this.loadVouchersByAssigment(this.cashierBalancing.cash_register_assignment.id)
             this.showFormBalancing = true
         },
         async cerrarCaja() {
@@ -477,6 +528,43 @@ export default {
 .fondo-tabla {
     background-color: lighten($color: #856826, $amount: 40);
 }
+.items-pedidos {
+    margin-left: 15%;
+    margin-right: 15%;
+    overflow-y: auto;
+    z-index: 1000 !important;
+}
+.bgDialog {
+    background-color: lighten($color: #E3CD83, $amount: 10);
+}
+.bgDialog::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+.bgDialog::-webkit-scrollbar:vertical {
+    width: 1px;
+}
+.bgDialog::-webkit-scrollbar-button:increment,#item_menu::-webkit-scrollbar-button {
+    display: none;
+} 
+.bgDialog::-webkit-scrollbar:horizontal {
+    height: 10px;
+}
+.bgDialog::-webkit-scrollbar-thumb {
+    background-color: #797979;
+    border-radius: 20px;
+    // border: 1px solid #f1f2f3
+}
+.bgDialog::-webkit-scrollbar-track {
+    border-radius: 10px;
+}
+.itemList {
+    border-bottom: 1px solid;
+    background-color: rgba(133, 104, 38, 0.5);
+    margin: 1% 0%;
+}
+.tituloMenu {
+    font-size: 1em;
+}
 /* Estilos para motores Webkit y blink (Chrome, Safari, Opera... )*/
 #close-day::-webkit-scrollbar {
     -webkit-appearance: none;
@@ -555,6 +643,16 @@ export default {
     }
     .texto {
         font-size: 0.9em;
+    }
+    .items-pedidos {
+        margin-left: 0%;
+        margin-right: 0%;
+    }
+    .itemList {
+        font-size: 0.8em;
+    }
+    .tituloMenu {
+        font-size: 1.1em;
     }
 }
 </style>

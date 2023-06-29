@@ -1,12 +1,12 @@
 <template>
     <v-card
-        class="mx-auto overflow-hidden"
+        class="mx-auto"
         height="100vh">
         <v-layout>
             <v-app-bar color="#F1C40F" :elevation="10">
                 <v-app-bar-nav-icon @click="drawer = !drawer" class="icon"></v-app-bar-nav-icon>
-                <v-avatar size="small" class="imagen">
-                    <img src="@/assets/logo.jpg" alt="" height="50">
+                <v-avatar rounded="0" class="imagen">
+                    <img src="@/assets/logo.png" alt="" height="45">
                 </v-avatar>
                 <v-card class="texto" flat>Módulo de Administración</v-card>
                 <v-spacer></v-spacer>
@@ -55,6 +55,14 @@
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-menu-view'})"></v-list-item>
                     <v-list-item
+                        prepend-icon="mdi-food-variant"
+                        title="Insumos por plato/bebida"
+                        value="insumos"
+                        active-class="bgYellowActive animate__animated animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-supply-view'})"></v-list-item>
+                    <v-list-item
                         v-if="user.role && user.role.id == 10000"
                         prepend-icon="mdi-percent-circle"
                         title="Promociones"
@@ -84,6 +92,15 @@
                         @click="this.$router.push({name: 'adm-table-view'})"></v-list-item>
                     <v-list-item
                         v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
+                        prepend-icon="mdi-currency-usd"
+                        title="Métodos de pago"
+                        value="metodos-pago"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-payment-method-view'})"></v-list-item>
+                    <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
                         prepend-icon="mdi-cash-register"
                         title="Cajas registradoras"
                         value="caja_registradora"
@@ -100,6 +117,15 @@
                         density="compact"
                         class="bgYellow"
                         @click="this.$router.push({name: 'adm-client-view'})"></v-list-item>
+                    <v-list-item
+                        v-if="user.role && (user.role.id == 1 || user.role.id == 9)"
+                        prepend-icon="mdi-store"
+                        title="Mapa del local"
+                        value="place_map"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="this.$router.push({name: 'adm-place-map-view'})"></v-list-item>
                     <v-list-subheader color="white" v-if="user.role && (user.role.id == 1 || user.role.id == 9)">PERSONAL</v-list-subheader>
                     <v-list-item
                         v-if="user.role && (user.role.id == 1 || user.role.id == 9)"

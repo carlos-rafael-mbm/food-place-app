@@ -3,3 +3,10 @@ export const getSupplyById = (state) => (id = '') => {
     if (!supply) return
     return {...supply}
 }
+
+export const getMovementReasonsByType = (state) => (type = '') => {
+    const reasons = state.movement_reasons.filter(razon => razon.reason_type === type)
+    if (!reasons) return
+    return [...reasons]
+}
+

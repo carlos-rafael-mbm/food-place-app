@@ -16,6 +16,20 @@ export const loadBranches = async({commit}) => {
     }
 }
 
+export const loadBranchWarehousesDetailByMain = async({commit}) => {
+    let branch_warehouses_detail = []
+    try {
+        const { data } = await foodplaceApi.get(`/branch_warehouses_detail/search-main-branch`)
+        for (const entry of Array.prototype.entries.call(data)) {
+            branch_warehouses_detail.push({...entry[1], orden: entry[0] + 1})
+        }
+    } catch (error) {
+        branch_warehouses_detail = []
+    } finally {
+        commit('setBranchWarehousesDetail', branch_warehouses_detail)
+    }
+}
+
 export const loadBranchWarehousesDetail = async({commit}, id) => {
     let branch_warehouses_detail = []
     try {
@@ -30,11 +44,20 @@ export const loadBranchWarehousesDetail = async({commit}, id) => {
     }
 }
 
+export const loadBranchWarehousesDetailOutput = async(_, id) => {
+    try {
+        const { data } = await foodplaceApi.get(`/branch_warehouses_detail/search-branch-warehouse/output/${id}`)
+        return data
+    } catch (error) {
+        return []
+    }
+}
+
 export const createBranch = async ({commit}, form) => {
     try {
         const {data} = await foodplaceApi.post('/branches', form)
-        const { id, name, address, state } = data['sucursal-creada']
-        const sucursal_nueva = { id, name, address, state }
+        const { id, name, address, type, state } = data['sucursal-creada']
+        const sucursal_nueva = { id, name, address, type, state }
         commit('addBranch', sucursal_nueva)
         return [id, 'Ok']
     } catch (err) {
@@ -63,8 +86,8 @@ export const updateBranch = async({commit}, form) => {
         const idSucursal = form[0]
         const sucursal = form[1]
         const {data} = await foodplaceApi.put(`/branches/${idSucursal}`, sucursal)
-        const { id, name, address, state } = data['sucursal-actualizada']
-        const sucursal_modificada = { id, name, address, state }
+        const { id, name, address, type, state } = data['sucursal-actualizada']
+        const sucursal_modificada = { id, name, address, type, state }
         commit('updateBranch', sucursal_modificada)
         return [id, 'Ok']
     } catch (err) {
@@ -87,6 +110,15 @@ export const updateBranchWarehouseDetail = async ({commit}, form) => {
         if (err.response) {
             return [0, err.response.data.message]
         }
+    }
+}
+
+export const updateSupplyControl = async(_, id) => {
+    try {
+        const { data } = await foodplaceApi.put(`/branch_warehouses_detail/search-branch-warehouse/output/${id}`)
+        return [1, data.message]
+    } catch (error) {
+        return [0, error.response.data.message]
     }
 }
 

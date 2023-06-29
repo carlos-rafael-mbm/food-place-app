@@ -10,6 +10,12 @@ export const getActiveBranches = (state) => () => {
     return [...branches]
 }
 
+export const getActiveBranchesDestiny = (state) => (idOrigin = '') => {
+    const branches = [...state.branches.filter(p => p.state == 1 && p.id != idOrigin)]
+    if (!branches) return
+    return [...branches]
+}
+
 export const getSuppliesToEntry = (state) => {
     const branch_warehouse_detail = [...state.branch_warehouses_detail]
     const supplies_entry = []
@@ -45,4 +51,11 @@ export const getDetailByBranch = (state) => (idBranch = '', idItem = '') => {
     const branch_warehouse_detail = state.branch_warehouses_detail.find(m => m.branch.id == idBranch && m.supply.id == idItem)
     if (!branch_warehouse_detail) return
     return {...branch_warehouse_detail}
+}
+
+export const getSuppliesToSelect = (state) => {
+    let supplies = []
+    state.branch_warehouses_detail.map(m => supplies.push({id: m.id, name: `${m.supply.name} (${m.stock.toFixed(2)} ${m.supply.measurement_unit.abbreviation})`}))
+    if (!supplies) return
+    return [...supplies]
 }

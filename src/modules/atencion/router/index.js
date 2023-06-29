@@ -17,10 +17,22 @@ export default {
             component: () => import(/* webpackChunkName: "atencion-nuevo-view" */ '@/modules/atencion/views/nuevo-pedido/NuevoPedidoView.vue')
         },
         {
+            path: '/atencion/impresion',
+            name: 'atencion-order-to-print-view',
+            beforeEnter: [isAuthenticatedWaiter],
+            component: () => import(/* webpackChunkName: "atencion-order-to-print-view" */ '@/modules/atencion/views/pedido/PedidoImpresionView.vue')
+        },
+        {
             path: '/atencion/pedidos',
             name: 'atencion-order-view',
             beforeEnter: [isAuthenticatedWaiter],
             component: () => import(/* webpackChunkName: "atencion-order-view" */ '@/modules/atencion/views/pedido/PedidoView.vue')
+        },
+        {
+            path: '/atencion/distribucion',
+            name: 'atencion-distribucion-view',
+            beforeEnter: [isAuthenticatedWaiter],
+            component: () => import(/* webpackChunkName: "atencion-distribucion-view" */ '@/modules/atencion/views/mapa_local/MapaLocalView.vue')
         }
     ]
 }

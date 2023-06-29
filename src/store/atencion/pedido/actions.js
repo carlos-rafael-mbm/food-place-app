@@ -109,6 +109,22 @@ export const loadOrdersByAssigment = async(_, assignment_id) => {
     }
 }
 
+export const loadOrdersToPrint = async({commit}) => {
+    const orders = []
+    try {
+        const { data } = await foodplaceApi.get('/orders/print')
+        for (const entry of Array.prototype.entries.call(data)) {
+            orders.push({...entry[1], orden: entry[0] + 1})
+        }
+        if (orders) {
+            orders.sort((a, b) => b.id - a.id)
+        }
+        commit('setOrders', orders)
+    } catch (error) {
+        commit('setOrders', orders)
+    }
+}
+
 export const loadMostRequestedItemsByMonth = async(_, filter) => {
     const orders = []
     const year = filter[0]
@@ -171,6 +187,18 @@ export const loadOrderDetailsByVoucher = async({commit}, comprobante) => {
     } finally {
         commit('setOrderDetails', order_details)
     }
+}
+
+export const revertOrder = async(_, voucher_id) => {
+    let response = {}
+    try {
+        const { data } = await foodplaceApi.get(`/orders/revert/${voucher_id}`)
+        response = data
+    } catch (error) {
+        response.rpta = 0
+        response.message = 'Error'
+    }
+    return response
 }
 
 export const createOrder = async ({commit}, form) => {

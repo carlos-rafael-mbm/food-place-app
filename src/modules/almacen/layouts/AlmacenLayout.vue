@@ -5,8 +5,8 @@
         <v-layout>
             <v-app-bar color="#E75D48" :elevation="10">
                 <v-app-bar-nav-icon @click="drawer = !drawer" class="icon"></v-app-bar-nav-icon>
-                <v-avatar size="small" class="imagen">
-                    <img src="@/assets/logo.jpg" alt="" height="50">
+                <v-avatar rounded="0" class="imagen">
+                    <img src="@/assets/logo.png" alt="" height="45">
                 </v-avatar>
                 <v-card class="texto" flat>Módulo de Almacén</v-card>
                 <v-spacer></v-spacer>
@@ -70,15 +70,32 @@
                         density="compact"
                         class="bgYellow"
                         @click="$router.push({name: 'alm-supplies-warehouse-view'})"></v-list-item>
-                    <v-list-subheader color="white">INVENTARIO</v-list-subheader>
+                    <v-list-subheader color="white">PREPARACIÓN</v-list-subheader>
                     <v-list-item
+                        prepend-icon="mdi-swap-horizontal"
+                        title="Salidas por preparación"
+                        value="salidas_preparacion"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="$router.push({name: 'alm-output-preparation-view'})"></v-list-item>
+                    <v-list-subheader color="white">INVENTARIO</v-list-subheader>
+                    <!-- <v-list-item
                         prepend-icon="mdi-archive-arrow-down"
                         title="Entradas"
                         value="entradas"
                         active-class="bgYellowActive animate__animated animate__bounceIn"
                         density="compact"
                         class="bgYellow"
-                        @click="$router.push({name: 'alm-entry-view'})"></v-list-item>
+                        @click="$router.push({name: 'alm-entry-view'})"></v-list-item> -->
+                    <v-list-item
+                        prepend-icon="mdi-swap-horizontal"
+                        title="Movimientos E/S"
+                        value="movimientos"
+                        active-class="bgYellowActive animate__animated animate__bounceIn"
+                        density="compact"
+                        class="bgYellow"
+                        @click="$router.push({name: 'alm-movements-view'})"></v-list-item>
                     <v-list-item
                         prepend-icon="mdi-counter"
                         title="Conteo de existencias"

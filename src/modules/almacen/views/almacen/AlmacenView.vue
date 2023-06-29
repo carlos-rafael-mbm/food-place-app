@@ -47,7 +47,7 @@
                                 </div>
                             </div>
                             <div class="d-flex justify-content-center align-items-center">
-                                <div style="width: 100%" class="middle-control">
+                                <div style="width: 65%" class="left-control mt-5">
                                     <label for="txtDireccion" style="font-weight: bold">Dirección</label>
                                     <v-text-field
                                         hide-details="auto"
@@ -57,6 +57,14 @@
                                         required>
                                     </v-text-field>
                                 </div>
+                                <div style="width: 35%" class="right-control mt-5">                                    
+                                    <v-checkbox
+                                        label="Es principal?"
+                                        color="brown"
+                                        hide-details
+                                        v-model="branch.type">
+                                    </v-checkbox>
+                                </div>                            
                             </div>
                             <hr style="border-top: 5px solid; margin-bottom: 5px">
                             <div class="text-center">
@@ -89,6 +97,10 @@
                             <div v-if="item.state == 1">Activo</div>
                             <div v-else>Inactivo</div>
                         </template>
+                        <template #item-type="item">
+                            <div v-if="item.type == 1">Principal</div>
+                            <div v-else>Secundario</div>
+                        </template>
                     </easy-data-table>
                 </div>
             </div>
@@ -113,6 +125,7 @@ export default {
                 id: 0,
                 name: '',
                 address: '',
+                type: false,
                 state: true
             },
             headers: [],
@@ -130,6 +143,7 @@ export default {
             this.branch.name = ''
             this.branch.address = ''
             this.branch.state = true
+            this.branch.type = false
             setTimeout(() => {
                 this.$refs.form.resetValidation()
             }, 200);
@@ -142,17 +156,26 @@ export default {
                 allowOutsideClick: false
             })
             Swal.showLoading()
+            if(this.branch.type==1){
+                const existePrincipal = this.branches.filter(branch => branch.type==1)
+                if (existePrincipal && existePrincipal.length>0){
+                    Swal.fire('Error', 'Ya existe un almacén principal', 'error')
+                    return
+                }
+            }
             let res = []
             if (this.branch.id == 0) {
                 const formData = new FormData()
                 formData.append('name', this.branch.name)
                 formData.append('address', this.branch.address ? this.branch.address : '')
+                formData.append('type', this.branch.type ? 1 : 2)
                 formData.append('state', this.branch.state ? 1 : 0)
                 res = await this.createBranch(formData)
             } else {
                 const formData = new FormData()
                 formData.append('name', this.branch.name)
                 formData.append('address', this.branch.address ? this.branch.address : '')
+                formData.append('type', this.branch.type ? 1 : 2)
                 formData.append('state', this.branch.state ? 1 : 0)
                 res = await this.updateBranch([this.branch.id, formData])
             }
@@ -175,6 +198,7 @@ export default {
             } else {
                 this.branch = branch
                 this.branch.state = this.branch.state == 1 ? true : false
+                this.branch.type = this.branch.type == 1 ? true : false
                 Swal.close()
             }
         },
@@ -216,6 +240,7 @@ export default {
                 { text: "Nombre", value: "name", sortable: true },
                 { text: "Dirección", value: "address", sortable: true },
                 { text: "Estado", value: "state" },
+                { text: "Tipo", value: "type" },
                 { text: "Acciones", value: "action", width: 100 }
             ]
     }

@@ -25,15 +25,16 @@
             <div class="justify-content-center align-items-center mt-4" style="margin-bottom: -12px">
                 <div id="formulario" class="animate__animated animate__flipInY mx-auto">
                     <div class="justify-content-center align-items-center">
-                        <v-combobox
+                        <v-select
                             v-model="table"
                             :items="getActiveTables()"
                             item-value="id"
                             item-title="number"
                             label="Seleccione una mesa"
                             variant="solo"
-                            bg-color="#E3CD83">
-                        </v-combobox>
+                            bg-color="#E3CD83"
+                            return-object>
+                        </v-select>
                     </div>
                 </div>
             </div>
@@ -119,7 +120,7 @@
                         </div>
                     </v-toolbar>
                     <v-list class="bgDialog">
-                        <div v-if="toEdit" class="d-flex justify-content-center align-items-center mx-8 mt-3">
+                        <!-- <div v-if="toEdit" class="d-flex justify-content-center align-items-center mx-8 mt-3">
                             <v-combobox
                                 label="Seleccione promoción"
                                 v-model="promotion"
@@ -129,7 +130,7 @@
                                 :rules="[rules.requiredSelection]"
                                 required>
                             </v-combobox>
-                        </div>
+                        </div> -->
                         <v-list-item
                             v-for="(item, i) in isPayment ? listOrderDetailsGroup : order_details"
                             :key="i"
@@ -181,6 +182,35 @@
                             </div>
                         </div>
                         <div v-if="generaDoc" style="width: 100%">
+                            <div class="d-flex justify-content-center align-items-center mt-2">
+                                <div class="mx-auto text-center metodo-pago">
+                                    <v-select
+                                        v-model="payment_method"
+                                        :items="getActivePaymentMethods()"
+                                        hide-details="true"
+                                        density="compact"
+                                        item-value="id"
+                                        item-title="method"
+                                        :rules="[rules.requiredSelection]"
+                                        label="Seleccione método de pago"
+                                        required
+                                        return-object>
+                                        <!-- <template v-slot:prepend>
+                                            <v-avatar>
+                                                <v-img
+                                                    alt="payment-avatar"
+                                                    :src="item.image"></v-img>
+                                            </v-avatar>
+                                        </template> -->
+                                        <!-- <template v-slot:item="{item}">
+                                            <v-list-item
+                                                :prepend-avatar="item.raw.image"
+                                                :title="item.raw.method"
+                                            />
+                                        </template> -->
+                                    </v-select>
+                                </div>
+                            </div>
                             <div class="row justify-content-center align-items-center mt-1" style="width: 100%">
                                 <div class="col-auto text-center comprobante">
                                     <v-radio-group v-model="tipoDoc" inline style="margin-bottom: -15px" @click="docCliente = ''; nombreCliente = ''">
@@ -308,8 +338,16 @@ export default {
             generaDoc: false,
             docCliente: '',
             nombreCliente: '',
+            nombresCliente: '',
+            apellidosCliente: '',
             correlativo: '',
             habilitarSunat: false,
+            ublVersion: '',
+            tipoOpeSunat: '',
+            serieBoleta: '',
+            serieFactura: '',
+            codigoBoleta: '',
+            codigoFactura: '',
             montoIgv: 0,
             rucRestaurante: '',
             razonSocial: '',
@@ -319,7 +357,9 @@ export default {
                 initial_balance: 0,
                 cash_register: null,
                 employee: null
-            }
+            },
+            payment_method: null,
+            cdrZip: ''
         }
     },
     watch: {
@@ -329,11 +369,13 @@ export default {
         }
     },
     computed: {
-        ...mapState('pedido', ['orders', 'orders_all', 'order_details']),
-        ...mapState('promocion', ['promotions']),
+        ...mapState('pedido', ['orders', 'order_details']),
         ...mapState('parametro', ['parameters']),
+        ...mapState('metodo_pago', ['payment_methods']),
+        ...mapState('comprobante', ['vouchers_all']),
         ...mapGetters('mesa', ['getActiveTables']),
         ...mapGetters('login', ['getUser']),
+        ...mapGetters('metodo_pago', ['getActivePaymentMethods']),
         getOrdersByTable: function() {
             return this.orders.filter(ord => ord.table.id == this.table.id)
         },
@@ -355,11 +397,13 @@ export default {
         }
     },
     methods: {
-        ...mapActions('pedido', ['loadOrders', 'loadAllOrders', 'loadOrderDetails', 'clearOrderComplete', 'clearOrderDetails', 'updateOrder', 'updateOrderDetail', 'createAssignmentOrder']),
-        ...mapActions('promocion', ['loadActivePromotions']),
+        ...mapActions('pedido', ['loadOrders', 'loadOrderDetails', 'clearOrderComplete', 'clearOrderDetails', 'updateOrder', 'updateOrderDetail', 'createAssignmentOrder']),
         ...mapActions('parametro', ['loadParameters']),
         ...mapActions('mesa', ['loadTables']),
         ...mapActions('asignacion_cajero', ['loadLastCashRegisterAssignmentByEmployee']),
+        ...mapActions('metodo_pago', ['loadPaymentMethods']),
+        ...mapActions('comprobante', ['loadAllVouchers', 'createVoucher', 'createVoucherDetail']),
+        ...mapActions('cliente', ['createClientByPayment']),
         getWidthScreen() {
             if (window.innerWidth >= 800) {
                 this.widthScreen = 4
@@ -391,8 +435,8 @@ export default {
         },
         async getMaxCorrelative(voucherType) {
             let maxValue = 0
-            await this.loadAllOrders()
-            const ordersWithVoucher = [...this.orders_all.filter(ord => ord.serie && ord.serie.startsWith(voucherType))]
+            await this.loadAllVouchers()
+            const ordersWithVoucher = [...this.vouchers_all.filter(v => v.serie && v.serie.startsWith(voucherType))]
             if (ordersWithVoucher && ordersWithVoucher.length > 0) {
                 maxValue = Math.max(...ordersWithVoucher.map(x => parseInt(x.correlative)))
                 maxValue++
@@ -464,6 +508,8 @@ export default {
                         if (rpta && rpta.data) {
                             if (rpta.data.nombres && rpta.data.apellidoPaterno) {
                                 this.nombreCliente = rpta.data.nombres + ' ' + rpta.data.apellidoPaterno + ' ' + rpta.data.apellidoMaterno
+                                this.nombresCliente = rpta.data.nombres
+                                this.apellidosCliente = rpta.data.apellidoPaterno + ' ' + rpta.data.apellidoMaterno
                             } else {
                                 await Swal.fire({
                                     position: 'top-end',
@@ -588,7 +634,7 @@ export default {
                 pdf.setFont('DroidSans', 'bold')
                 pdf.setFontSize(13)
                 pdf.text(this.razonSocial, 70, 22)
-                const image = require('@/assets/logo.jpg')
+                const image = require('@/assets/logo.png')
                 pdf.addImage(image, "PNG", 25, 15, 24, 24);
                 pdf.setFont('DroidSans', 'bold')
                 pdf.setFontSize(7)
@@ -741,11 +787,11 @@ export default {
             const total = this.getTotal
             const totalNoIGV = this.getTotalNoIGV
             const comprobante = {}
-            comprobante.ublVersion = '2.1'
-            comprobante.tipoOperacion = '0101' // SUNAT: Venta interna
-            comprobante.tipoDoc = this.tipoDoc <= 2 ? '03' : '01' // SUNAT: Boleta (3), Factura (1)
-            comprobante.serie = this.tipoDoc <= 2 ? 'B001' : 'F001'
-            comprobante.correlativo = this.getMaxCorrelative(this.tipoDoc <= 2 ? 'B' : 'F')
+            comprobante.ublVersion = this.ublVersion
+            comprobante.tipoOperacion = this.tipoOpeSunat // SUNAT: Venta interna
+            comprobante.tipoDoc = this.tipoDoc <= 2 ? this.codigoBoleta : this.codigoFactura // SUNAT: Boleta (3), Factura (1)
+            comprobante.serie = this.tipoDoc <= 2 ? this.serieBoleta : this.serieFactura
+            comprobante.correlativo = await this.getMaxCorrelative(this.tipoDoc <= 2 ? 'B' : 'F')
             comprobante.fechaEmision = fechaActual.toISOString().slice(0, -5) + '-05:00'
             comprobante.formaPago = {}
             comprobante.formaPago.moneda = 'PEN'
@@ -756,6 +802,10 @@ export default {
                 comprobante.client.tipoDoc = this.docCliente.length == 8 ? '1' : '6' // SUNAT: Cod de tipo de documento 1: DNI, 6: RUC
                 comprobante.client.numDoc = this.docCliente
                 comprobante.client.rznSocial = this.nombreCliente
+            } else {
+                comprobante.client.tipoDoc = '0'
+                comprobante.client.numDoc = '--------'
+                comprobante.client.rznSocial = 'SIN NOMBRE'
             }
             comprobante.company = {}
             comprobante.company.ruc = this.rucRestaurante
@@ -763,15 +813,15 @@ export default {
             comprobante.company.nombreComercial = this.razonSocial
             comprobante.company.address = {}
             comprobante.company.address.direccion = this.direccion
-            comprobante.company.address.provincia = 'Cusco'
-            comprobante.company.address.departamento = 'Cusco'
-            comprobante.company.address.distrito = 'Cusco'
-            comprobante.mtoOperGravadas = totalNoIGV
-            comprobante.mtoIGV = totalNoIGV * this.montoIgv / 100
-            comprobante.valorVenta = totalNoIGV
-            comprobante.totalImpuestos = totalNoIGV * this.montoIgv / 100
-            comprobante.subTotal = total
-            comprobante.mtoImpVenta = total
+            // comprobante.company.address.provincia = 'Cusco'
+            // comprobante.company.address.departamento = 'Cusco'
+            // comprobante.company.address.distrito = 'Cusco'
+            comprobante.mtoOperGravadas = parseFloat(totalNoIGV.toFixed(2))
+            comprobante.mtoIGV = parseFloat((totalNoIGV * this.montoIgv / 100).toFixed(2))
+            comprobante.valorVenta = parseFloat(totalNoIGV.toFixed(2))
+            comprobante.totalImpuestos = parseFloat((totalNoIGV * this.montoIgv / 100).toFixed(2))
+            comprobante.subTotal = parseFloat(total.toFixed(2))
+            comprobante.mtoImpVenta = parseFloat(total.toFixed(2))
             // Construir detalle
             comprobante.details = []
             this.listOrderDetailsGroup.map(x => {
@@ -779,13 +829,13 @@ export default {
                 detalle.unidad = 'NIU'
                 detalle.descripcion = x.menu_detail.item_menu.name
                 detalle.cantidad = x.amount
-                detalle.mtoValorUnitario = (x.price * 100) / (100 + this.monto)
-                detalle.mtoValorVenta = x.amount * ((x.price * 100) / (100 + this.monto))
-                detalle.mtoBaseIgv = x.amount * ((x.price * 100) / (100 + this.monto))
+                detalle.mtoValorUnitario = parseFloat(((x.price * 100) / (100 + this.montoIgv)).toFixed(2))
+                detalle.mtoValorVenta = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv))).toFixed(2))
+                detalle.mtoBaseIgv = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv))).toFixed(2))
                 detalle.porcentajeIgv = this.montoIgv
-                detalle.igv = this.montoIgv
+                detalle.igv = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv)) * (this.montoIgv / 100)).toFixed(2))
                 detalle.tipAfeIgv = 10
-                detalle.totalImpuestos = x.amount * ((x.price * 100) / (100 + this.monto)) * (this.montoIgv / 100)
+                detalle.totalImpuestos = parseFloat((x.amount * ((x.price * 100) / (100 + this.montoIgv)) * (this.montoIgv / 100)).toFixed(2))
                 detalle.mtoPrecioUnitario = x.price
                 comprobante.details.push(detalle)
             })
@@ -801,81 +851,122 @@ export default {
             comprobante.legends.push(legend)
             try {
                 // Revisar envio de datos a SUNAT (error por certificado digital)
-                // const rptaEnvio = await facturacionApi.post('/invoice/send', comprobante)
-                // console.log(rptaEnvio)
-                const rpta = await facturacionApi.post('/invoice/pdf', comprobante, {
-                    responseType: 'blob',
-                    headers: {
-                        'Accept': 'application/pdf'
-                    }
-                })
-                this.correlativo = comprobante.correlativo
-                const url = URL.createObjectURL(rpta.data)
-                this.download(url, this.tipoDoc <= 2 ? `Boleta_${comprobante.correlativo}.pdf` : `Factura_${comprobante.correlativo}.pdf`)
-                URL.revokeObjectURL(url)
-                return true
+                const {data} = await facturacionApi.post('/invoice/send', comprobante)
+                if (data.sunatResponse.success) {
+                    this.cdrZip = data.sunatResponse.cdrZip
+                    const rpta = await facturacionApi.post('/invoice/pdf', comprobante, {
+                        responseType: 'blob',
+                        headers: {
+                            'Accept': 'application/pdf'
+                        }
+                    })
+                    this.correlativo = comprobante.correlativo
+                    const url = URL.createObjectURL(rpta.data)
+                    this.download(url, this.tipoDoc <= 2 ? `Boleta_${comprobante.correlativo}.pdf` : `Factura_${comprobante.correlativo}.pdf`)
+                    URL.revokeObjectURL(url)
+                    return true
+                } else {
+                    Swal.fire('Error SUNAT', `${data.sunatResponse.error.code} ${data.sunatResponse.error.message}`, 'error')
+                    return false
+                }
             } catch (error) {
-                await Swal.fire({
-                    position: 'top-end',
-                    text: 'Error al generar Comprobante ',
-                    color: 'white',
-                    background: 'red',
-                    showConfirmButton: false,
-                    timer: 1200
-                })
+                Swal.fire('Error SUNAT', 'Error al realizar operaciones con SUNAT. No se procesó la operación', 'error')
                 return false
             }
         },
         async pagarPedido() {
-            let res = []
-            const formData = new FormData()
-            formData.append('state', 5)
-            if (this.toEdit && this.promotion.id != 0) {
-                formData.append('promotion_id', this.promotion.id)
+            let client = null
+            if (this.tipoDoc >= 2) {
+                // 1. Guardar datos de cliente
+                const formCliente = new FormData()
+                formCliente.append('doc_type', this.docCliente.length == 8 ? '1' : '2')
+                formCliente.append('doc_number', this.docCliente)
+                formCliente.append('recurrent', 0)
+                if (this.docCliente.length == 8) {
+                    formCliente.append('name', this.nombresCliente)
+                    formCliente.append('surname', this.apellidosCliente)
+                } else {
+                    formCliente.append('business_name', this.nombreCliente)
+                }
+                client = await this.createClientByPayment(formCliente)
             }
+            // 2. Agregar registros a Voucher y Voucher_Detail
+            const formVoucher = new FormData()
+            formVoucher.append('doc_type', this.tipoDoc <= 2 ? '03' : '01')
             if (this.correlativo.length > 0) {
-                formData.append('serie', this.tipoDoc <= 2 ? 'B001' : 'F001')
-                formData.append('correlative', this.correlativo)
+                formVoucher.append('serie', this.tipoDoc <= 2 ? 'B001' : 'F001')
+                formVoucher.append('correlative', this.correlativo)
             }
-            formData.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
-            for (const id of this.listOrderIds) {
-                res = await this.updateOrder([id, formData])
-                const formAsignacion = new FormData()
-                formAsignacion.append('order_id', id)
-                formAsignacion.append('employee_id', this.getUser.employee.id)
-                formAsignacion.append('process_id', 5)
-                let resAsign = await this.createAssignmentOrder(formAsignacion)
-                if (resAsign[0] == 0) {
-                    await Swal.fire({
-                        position: 'top-end',
-                        text: 'Error al asignar personal',
-                        color: 'white',
-                        background: 'red',
-                        showConfirmButton: false,
-                        timer: 1200
-                    })
-                }
+            formVoucher.append('tax_value', this.montoIgv)
+            formVoucher.append('total_no_tax', this.getTotalNoIGV)
+            formVoucher.append('tax_amount', this.getTotalNoIGV * this.montoIgv / 100)
+            formVoucher.append('total_tax', this.getTotal)
+            formVoucher.append('total_tax_text', readNumbersAsText(this.getTotal, {
+                plural: "SOLES",
+                singular: "SOL",
+                centPlural: "CÉNTIMOS",
+                centSingular: "CÉNTIMO"
+            }))
+            formVoucher.append('reference', '')
+            formVoucher.append('state', 1)
+            formVoucher.append('table_id', this.table.id)
+            if (client) {
+                formVoucher.append('client_id', client.id)
             }
-            if (res[0] != 0) {
-                if (this.toEdit) {
-                    let hasError = false
-                    console.log(this.listOrderDetailsSelected)
-                    for (const item of this.listOrderDetailsSelected) {
-                        const formDetalle = new FormData()
-                        formDetalle.append('price', item.price)
-                        const resDetalle = await this.updateOrderDetail([item.id, formDetalle])
-                        if (resDetalle[0] == 0) {
-                            hasError = true
-                        }
-                    }
-                    if (hasError) {
-                        Swal.fire('Error', 'El pago se realizó con errores en los precios', 'error')
+            formVoucher.append('payment_method_id', this.payment_method.id)
+            formVoucher.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
+            if (this.cdrZip) {
+                formVoucher.append('cdr_file', this.cdrZip)
+            }
+            const resVoucher = await this.createVoucher(formVoucher)
+            if (resVoucher[0] != 0) {
+                for (const item of this.listOrderDetailsGroup) {
+                    const formVoucherDetail = new FormData()
+                    formVoucherDetail.append('unit', 'NIU')
+                    formVoucherDetail.append('amount', item.amount.toFixed(2))
+                    // formVoucherDetail.append('sku', '')
+                    formVoucherDetail.append('category', item.menu_detail.item_menu.category.name)
+                    formVoucherDetail.append('item_menu', item.menu_detail.item_menu.name)
+                    formVoucherDetail.append('price_no_tax', ((item.price * 100) / (100 + this.montoIgv)).toFixed(2))
+                    formVoucherDetail.append('price_tax', item.price.toFixed(2))
+                    formVoucherDetail.append('subtotal', (item.amount * ((item.price * 100) / (100 + this.montoIgv))).toFixed(2))
+                    formVoucherDetail.append('total', (item.amount * item.price).toFixed(2))
+                    formVoucherDetail.append('voucher_id', resVoucher[0])
+                    await this.createVoucherDetail(formVoucherDetail)
+                }
+                // 2. Actualizar estado de pedidos y asignación de personal que cobra
+                let res = []
+                const formData = new FormData()
+                formData.append('state', 5)
+                formData.append('cash_register_assignment_id', this.cashRegisterAssignment.id)
+                formData.append('voucher_id', resVoucher[0])
+                for (const id of this.listOrderIds) {
+                    res = await this.updateOrder([id, formData])
+                    const formAsignacion = new FormData()
+                    formAsignacion.append('order_id', id)
+                    formAsignacion.append('employee_id', this.getUser.employee.id)
+                    formAsignacion.append('process_id', 5)
+                    let resAsign = await this.createAssignmentOrder(formAsignacion)
+                    if (resAsign[0] == 0) {
+                        await Swal.fire({
+                            position: 'top-end',
+                            text: 'Error al asignar personal',
+                            color: 'white',
+                            background: 'red',
+                            showConfirmButton: false,
+                            timer: 1200
+                        })
                     }
                 }
-                Swal.fire('Cobro exitoso', 'Se realizó el pago correctamente', 'success')
+                if (res[0] != 0) {
+                    Swal.fire('Cobro exitoso', 'Se realizó el pago correctamente', 'success')
+                } else {
+                    Swal.fire('Cobro exitoso', 'Se guardó el voucher, pero no se realizó el pago', 'success')
+                }
             } else {
-                Swal.fire('Error', 'Error no se pudo realizar el pago. ' + res[1], 'error')
+                Swal.fire('Error', 'Error no se pudo realizar el pago. ' + resVoucher[1], 'error')
             }
+            // 4. Limpiar datos
             this.limpiar()
             this.listOrderIds = []
             this.listOrderDetailsSelected = []
@@ -897,15 +988,18 @@ export default {
             this.promotion.discount = ''
             this.promotion.image = ''
             this.promotion.state = true
-            this.tipoDoc = 0,
-            this.generaDoc = false,
-            this.docCliente = '',
+            this.tipoDoc = 0
+            this.generaDoc = false
+            this.docCliente = ''
             this.nombreCliente = ''
+            this.nombresCliente = ''
+            this.apellidosCliente = ''
             this.correlativo = ''
         }
     },
     async mounted() {
         window.addEventListener("resize", this.getWidthScreen)
+        await this.loadPaymentMethods()
         await this.loadParameters()
         let parameterFound = this.parameters.find(p => p.parameter_code == 1000 && p.item_code == 1002)
         this.razonSocial = parameterFound ? parameterFound.value : ''
@@ -917,8 +1011,19 @@ export default {
         this.montoIgv = parameterFound ? parseFloat(parameterFound.value) : 0
         parameterFound = this.parameters.find(p => p.parameter_code == 1010 && p.item_code == 1013)
         this.habilitarSunat = parameterFound ? (parameterFound.value == '1' ? true : false) : false
+        parameterFound = this.parameters.find(p => p.parameter_code == 1040 && p.item_code == 1041)
+        this.ublVersion = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1050 && p.item_code == 1051)
+        this.tipoOpeSunat = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1060 && p.item_code == 1061)
+        this.serieBoleta = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1060 && p.item_code == 1062)
+        this.serieFactura = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1071)
+        this.codigoBoleta = parameterFound ? parameterFound.value : ''
+        parameterFound = this.parameters.find(p => p.parameter_code == 1070 && p.item_code == 1072)
+        this.codigoFactura = parameterFound ? parameterFound.value : ''
         await this.clearOrderComplete()
-        await this.loadActivePromotions()
         this.cashRegisterAssignment = await this.loadLastCashRegisterAssignmentByEmployee(this.getUser.employee.id)
         this.isLoading = false
         if (!this.cashRegisterAssignment) {
@@ -1004,6 +1109,9 @@ export default {
 .sin-comprobante {
     width: 40%;
 }
+.metodo-pago {
+    width: 40%;
+}
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -1085,6 +1193,9 @@ input::-webkit-inner-spin-button {
     .sin-comprobante {
         width: 80%;
         font-size: 0.8em;
+    }
+    .metodo-pago {
+        width: 90%;
     }
 }
 </style>

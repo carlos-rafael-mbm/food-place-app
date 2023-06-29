@@ -19,8 +19,8 @@ export const loadClients = async({commit}) => {
 export const createClient = async ({commit}, form) => {
     try {
         const {data} = await foodplaceApi.post('/clients', form)
-        const { id, dni, name, surname, cellphone, email, birthday, recurrent, image } = data['cliente-creado']
-        const cliente_nuevo = { id, dni, name, surname, cellphone, email, birthday, recurrent, image }
+        const { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image } = data['cliente-creado']
+        const cliente_nuevo = { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image }
         commit('addClient', cliente_nuevo)
         return [id, 'Ok']
     } catch (err) {
@@ -30,13 +30,26 @@ export const createClient = async ({commit}, form) => {
     }
 }
 
+export const createClientByPayment = async (_, form) => {
+    try {
+        const {data} = await foodplaceApi.post('/clients/payment', form)
+        const { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image } = data['cliente-creado']
+        const cliente_nuevo = { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image }
+        return cliente_nuevo
+    } catch (err) {
+        if (err.response) {
+            return null
+        }
+    }
+}
+
 export const updateClient = async({commit}, form) => {
     try {
         const idClient = form[0]
         const client = form[1]
         const {data} = await foodplaceApi.put(`/clients/${idClient}`, client)
-        const { id, dni, name, surname, cellphone, email, birthday, recurrent, image } = data['cliente-actualizado']
-        const cliente_modificado = { id, dni, name, surname, cellphone, email, birthday, recurrent, image }
+        const { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image } = data['cliente-actualizado']
+        const cliente_modificado = { id, doc_type, doc_number, business_name, name, surname, cellphone, email, birthday, recurrent, image }
         commit('updateClient', cliente_modificado)
         return [id, 'Ok']
     } catch (err) {

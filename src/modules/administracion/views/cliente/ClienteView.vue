@@ -25,6 +25,30 @@
                     <div id="formulario" class="animate__animated animate__flipInY">
                         <div class="panelFormBase justify-content-center my-2">
                             <div class="panelForm50">
+                                <v-combobox
+                                    label="Tipo de Documento"                                    
+                                    :items=getParameterByParameterCode(1020)                                    
+                                    item-value="value"
+                                    item-title="item_desc"
+                                    prepend-inner-icon="mdi-card-account-details"
+                                    :rules="[rules.required]"
+                                    hide-details="auto"
+                                    v-model="obtained_parameter">
+                                </v-combobox>
+                            </div>                            
+                            <div class="panelForm50">
+                                <v-text-field
+                                    label="Numero de documento"
+                                    hide-details="auto"
+                                    prepend-inner-icon="mdi-account"
+                                    :rules="[rules.required]"
+                                    v-model="client.doc_number"
+                                    required>
+                                </v-text-field>
+                            </div>
+                        </div>                   
+                        <div v-if="obtained_parameter && obtained_parameter.value === '1'" class="panelFormBase justify-content-center my-2">
+                            <div class="panelForm50">
                                 <v-text-field
                                     label="Nombres"
                                     hide-details="auto"
@@ -45,18 +69,20 @@
                                 </v-text-field>
                             </div>
                         </div>
-                        <div class="panelFormBase justify-content-center my-2">
-                            <div class="panelForm30">
+                        <div v-else-if="obtained_parameter && obtained_parameter.value === '2'" class="panelFormBase justify-content-center my-2">
+                            <div class="panelForm100">
                                 <v-text-field
-                                    label="DNI"
+                                    label="Razón Social"
                                     hide-details="auto"
-                                    prepend-inner-icon="mdi-card-account-details"
-                                    v-model="client.dni"
-                                    type="number"
+                                    prepend-inner-icon="mdi-account"
+                                    :rules="[rules.required]"
+                                    v-model="client.business_name"
                                     required>
                                 </v-text-field>
                             </div>
-                            <div class="panelForm30">
+                        </div>                        
+                        <div class="panelFormBase justify-content-center my-2">                           
+                            <div class="panelForm50">
                                 <v-text-field
                                     label="Celular"
                                     hide-details="auto"
@@ -65,7 +91,7 @@
                                     type="number">
                                 </v-text-field>
                             </div>
-                            <div class="panelForm40">
+                            <div class="panelForm50">
                                 <v-text-field
                                     label="Email"
                                     hide-details="auto"
@@ -76,7 +102,7 @@
                                 </v-text-field>
                             </div>
                         </div>
-                        <div class="panelFormBase justify-content-center my-2">
+                        <div v-if="obtained_parameter && obtained_parameter.value === '1'" class="panelFormBase justify-content-center my-2">
                             <div class="panelForm50">
                                 <div class="mb-3">
                                     <v-text-field
@@ -111,6 +137,32 @@
                                 <v-btn prepend-icon="mdi-upload" rounded size="small" color="#679A50" @click="onSelectImage">Subir foto</v-btn>
                             </div>
                         </div>
+                        <div v-if="obtained_parameter && obtained_parameter.value === '2'" class="panelFormBase justify-content-center my-2">
+                            <div class="panelForm50">                                
+                                <div class="mt-3">
+                                    <v-checkbox
+                                        label="Es recurrente?"
+                                        color="brown"
+                                        hide-details
+                                        v-model="client.recurrent">
+                                    </v-checkbox>
+                                </div>
+                            </div>
+                            <div class="text-center panelForm50">
+                                <input type="file" @change="onSelectedImage" ref="imageSelector" v-show="false" accept="image/png, image/jpeg, image/jpg, image/bmp">
+                                <img v-if="localImage"
+                                    :src="localImage"
+                                    alt="entry-picture" class="img-thumbnail mb-2">
+                                <img v-else-if="client.image"
+                                    :src="client.image"
+                                    alt="entry-picture" class="img-thumbnail mb-2">
+                                <img v-else
+                                    src="@/assets/img/no-image.png"
+                                    alt="entry-picture" class="img-thumbnail mb-2">
+                                <br>
+                                <v-btn prepend-icon="mdi-upload" rounded size="small" color="#679A50" @click="onSelectImage">Subir foto</v-btn>
+                            </div>
+                        </div>
                         <hr style="border-top: 5px solid; margin-bottom: 5px">
                         <div class="text-center">
                             <v-btn prepend-icon="mdi-plus-circle" class="mb-2 mx-4" rounded color="#679A50" @click="nuevoCliente">Nuevo cliente</v-btn>
@@ -121,20 +173,20 @@
                 </div>
             </v-form>
             
-            <div id="tablaClients" class="animate__animated animate__flipInY">
+            <div v-if="obtained_parameter && obtained_parameter.value === '1'" id="tablaClients" class="animate__animated animate__flipInY">
                 <div class="d-flex my-1">
                     <span style="font-weight: bold; font-size: 18px;" class="text-white busquedaText">Búsqueda:</span>
                     <select v-model="searchField" class="form-control mx-3 bg-green-gray pointer busqueda" style="appearance:">
                         <option value="" selected>--Seleccione--</option>
-                        <option value="dni">DNI</option>
+                        <option value="doc_number">DNI</option>
                         <option value="name">Nombres</option>
                         <option value="surname">Apellidos</option>
                     </select>
                     <input type="text" class="form-control busqueda" v-model="searchValue">
                 </div>
                 <easy-data-table
-                    :headers="headers"
-                    :items="clients"
+                    :headers="headersDNI"
+                    :items=getDNIClients
                     :search-field="searchField"
                     :search-value="searchValue"
                     :theme-color="themeColor"
@@ -172,6 +224,56 @@
                     </template>
                 </easy-data-table>
             </div>
+            <div v-if="obtained_parameter && obtained_parameter.value === '2'" id="tablaClients" class="animate__animated animate__flipInY">
+                <div class="d-flex my-1">
+                    <span style="font-weight: bold; font-size: 18px;" class="text-white busquedaText">Búsqueda:</span>
+                    <select v-model="searchField" class="form-control mx-3 bg-green-gray pointer busqueda" style="appearance:">
+                        <option value="" selected>--Seleccione--</option>
+                        <option value="doc_number">RUC</option>
+                        <option value="business_name">Razón social</option>
+                    </select>
+                    <input type="text" class="form-control busqueda" v-model="searchValue">
+                </div>
+                <easy-data-table
+                    :headers="headersRUC"
+                    :items=getRUCClients
+                    :search-field="searchField"
+                    :search-value="searchValue"
+                    :theme-color="themeColor"
+                    :rows-per-page="10"
+                    table-class-name="customize-table"
+                    alternating
+                    show-index
+                    buttons-pagination
+                    rows-per-page-message="Filas por página"
+                    empty-message="No hay datos de clientes">
+                    <template #item-action="client">
+                        <div class="action-wrapper">
+                            <v-btn icon="mdi-square-edit-outline" class="text-center me-2" color="blue" size="x-small" @click="cargarCliente(client.id)"></v-btn>
+                            <v-btn icon="mdi-trash-can-outline" class="text-center ms-2" color="#E75D48" size="x-small" @click="eliminarCliente(client.id)"></v-btn>
+                        </div>
+                    </template>
+                    <template #item-business_name="client">
+                        <div style="white-space: nowrap">
+                            <v-avatar>
+                                <v-img
+                                    v-if="client.image"
+                                    alt="client-avatar"
+                                    :src="client.image"
+                                    cover></v-img>
+                                <v-icon
+                                    v-else
+                                    icon="mdi-account-circle"></v-icon>
+                            </v-avatar>
+                            <span class="ms-3">{{client.business_name}}</span>                      
+                        </div>
+                    </template>
+                    <template #item-recurrent="client">
+                        <div v-if="client.recurrent == 1">Recurrente</div>
+                        <div v-else>Normal</div>
+                    </template>
+                </easy-data-table>
+            </div>
         </div>
     </div>
     
@@ -195,7 +297,9 @@ export default {
             },
             client: {
                 id: 0,
-                dni: '',
+                doc_type: null,
+                doc_number: '',
+                business_name:'',
                 name: '',
                 surname: '',
                 cellphone: '',
@@ -204,18 +308,35 @@ export default {
                 recurrent: true,
                 image: ''
             },
-            headers: [],
+            obtained_parameter: null,
+            headersDNI: [],
+            headersRUC: [],
             searchField: '',
             searchValue: '',
             themeColor: "#856826"
         }
-    },
+    },    
     computed: {
         ...mapState('cliente', ['clients', 'isLoading']),
-        ...mapGetters('cliente', ['getClientById'])
+        ...mapGetters('cliente', ['getClientById']),
+        ...mapGetters('parametro', ['getParameterByParameterCode']),
+        getDNIClients(){
+            return this.clients.filter(client => client.doc_type==1)
+        },
+        getRUCClients(){
+            return this.clients.filter(client => client.doc_type==2)
+        }
+    },
+    watch:{
+        obtained_parameter(oldValue, newValue){
+            if(oldValue!=newValue){
+                this.client.doc_type=this.obtained_parameter.value
+            }            
+        }
     },
     methods: {
         ...mapActions('cliente', ['loadClients', 'createClient', 'updateClient', 'deleteClient']),
+        ...mapActions('parametro', ['loadParameters']),
         onSelectedImage(event) {
             const file = event.target.files[0]
             if (!file) {
@@ -261,23 +382,46 @@ export default {
             let res = []
             if (this.client.id == 0) {
                 const formData = new FormData()
-                formData.append('dni', this.client.dni ? this.client.dni : '')
-                formData.append('name', this.client.name)
-                formData.append('surname', this.client.surname)
+                formData.append('doc_type', this.client.doc_type)
+                formData.append('doc_number', this.client.doc_number)
+                if(this.client.doc_type==1){
+                    formData.append('name', this.client.name ? this.client.name : '')
+                    formData.append('surname', this.client.surname ? this.client.surname : '')
+                    if(this.client.birthday && this.client.birthday === ''){
+                        formData.append('birthday', null)
+                    }
+                    else{            
+                        formData.append('birthday', this.client.birthday)
+                    }
+                }
+                if(this.client.doc_type==2){
+                    formData.append('business_name', this.client.business_name ? this.client.business_name : '')
+                }               
                 formData.append('cellphone', this.client.cellphone ? this.client.cellphone : '')
                 formData.append('email', this.client.email ? this.client.email : '')
-                formData.append('birthday', this.client.birthday ? this.client.birthday : '')
                 formData.append('recurrent', this.client.recurrent ? 1 : 0)
                 formData.append('image', this.client.image ? this.client.image : '')
                 res = await this.createClient(formData)
             } else {
                 const formData = new FormData()
-                formData.append('dni', this.client.dni ? this.client.dni : '')
-                formData.append('name', this.client.name)
-                formData.append('surname', this.client.surname)
+                formData.append('doc_type', this.client.doc_type)
+                formData.append('doc_number', this.client.doc_number)
+                if(this.client.doc_type==1){
+                    formData.append('name', this.client.name ? this.client.name : '')
+                    formData.append('surname', this.client.surname ? this.client.surname : '')               
+                    if(this.client.birthday && this.client.birthday === ''){
+                        //formData.append('birthday', null)
+                        formData.append('birthday', this.client.birthday=null)
+                    }
+                    else{            
+                        formData.append('birthday', this.client.birthday)
+                    }
+                }
+                if(this.client.doc_type==2){
+                    formData.append('business_name', this.client.business_name ? this.client.business_name : '')
+                }   
                 formData.append('cellphone', this.client.cellphone ? this.client.cellphone : '')
                 formData.append('email', this.client.email ? this.client.email : '')
-                formData.append('birthday', this.client.birthday ? this.client.birthday : '')
                 formData.append('recurrent', this.client.recurrent ? 1 : 0)
                 formData.append('image', this.client.image ? this.client.image : '')
                 res = await this.updateClient([this.client.id, formData])
@@ -336,10 +480,13 @@ export default {
             }
         }
     },
-    mounted() {
-        this.loadClients()
-        this.headers = [
-            { text: "DNI", value: "dni" },
+    async mounted() {
+        await this.loadClients()
+        await this.loadParameters()
+        if (this.getParameterByParameterCode(1020).length > 0)
+            this.obtained_parameter = this.getParameterByParameterCode(1020)[0]
+        this.headersDNI = [
+            { text: "DNI", value: "doc_number" },
             { text: "Nombres", value: "name", sortable: true },
             { text: "Apellidos", value: "surname", sortable: true },
             { text: "Celular", value: "cellphone" },
@@ -348,7 +495,16 @@ export default {
             { text: "Recurrente", value: "recurrent", sortable: true },
             { text: "Acciones", value: "action" }
         ]
-    }
+        this.headersRUC = [
+            { text: "RUC", value: "doc_number" },
+            { text: "Razón Social", value: "business_name", sortable: true },
+            { text: "Celular", value: "cellphone" },
+            { text: "Email", value: "email" },
+            { text: "Fecha de nacimiento", value: "birthday" },
+            { text: "Recurrente", value: "recurrent", sortable: true },
+            { text: "Acciones", value: "action" }
+        ]       
+    }   
 }
 </script>
 
@@ -395,6 +551,11 @@ img {
     margin-left: 16px;
     margin-right: 16px;
     width: 50%;
+}
+.panelForm100 {
+    margin-left: 16px;
+    margin-right: 16px;
+    width: 100%;
 }
 /* Estilos para motores Webkit y blink (Chrome, Safari, Opera... )*/
 #client::-webkit-scrollbar {
@@ -492,6 +653,11 @@ select {
         width: 95%;
     }
     .panelForm50 {
+        margin-left: 8px;
+        margin-right: 8px;
+        width: 95%;
+    }
+    .panelForm100 {
         margin-left: 8px;
         margin-right: 8px;
         width: 95%;
